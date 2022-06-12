@@ -1,0 +1,16 @@
+{
+  "name": "urlexpander",
+  "version": "1.0.0",
+  "description": "This script can be used to expand shortened links found in the output of Twitter crawls.",
+  "main": "getExpandedURL.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.10",
+    "puppeteer": "^13.5.1",
+    "request": "^2.88.2"
+  }
+}
