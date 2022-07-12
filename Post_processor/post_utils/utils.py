@@ -15,7 +15,7 @@ def write_to_file(dict, filename):
 
 def row_parser(row):
     row_dict = {}
-    for key in row.index:
+    for key in row.keys():
         if key in PARSED_KEY:
             row_dict[key] = ast.literal_eval(row[key])
         else:

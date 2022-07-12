@@ -20,8 +20,8 @@ if __name__ == '__main__':
     citation_scope = load_input.load_scope('./citation_scope.csv')
 
     # load domain and twitter data
-    load_input.load_twitter('./TwitterOutput/*_output_*.csv')
-    load_input.load_domain('./DataDomain/*.csv')
+    load_input.load_twitter('./DataTwitter/*_output_*.csv')
+    load_input.load_domain('./DataDomain/')
 
     # post process data
     processor.process_crawler(crawl_scope, citation_scope)

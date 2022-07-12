@@ -28,7 +28,12 @@ def create_output():
     twitter_data = twitter_data.rename(
         columns={'date': 'date of publication', 'article_text': 'plain text', 'url_dup': 'url'})
 
-    output = domain_data.append(twitter_data)
+    if (len(domain_data) == 0):
+        output = twitter_data
+    elif (len(twitter_data) == 0):
+        output = domain_data
+    else:
+        output = domain_data.append(twitter_data)
     output = output[(output['citation url or text alias'].str.len() > 2) & ((
         output['associated publisher'].str.len() > 0) | (
         output['name'].str.len() > 0) | (

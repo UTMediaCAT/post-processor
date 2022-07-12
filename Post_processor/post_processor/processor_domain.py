@@ -135,52 +135,80 @@ def process_domain(crawl_scope, citation_scope):
         start = timer()
         # load domain_data from Saved
         data_partitions = dd.read_parquet('./Saved/domain_data.parquet')
-        data_partitions['citation url or text alias'] = ''
-        data_partitions['citation name'] = ''
-        data_partitions['anchor text'] = ''
+        if (len(data_partitions) == 0):
+            data_partitions['citation url or text alias'] = ''
+            data_partitions['citation name'] = ''
+            data_partitions['anchor text'] = ''
+            data_partitions['associated publisher'] = ''
+            data_partitions['tags'] = ''
+            data_partitions['name'] = ''
+            return {}, data_partitions
 
         referrals = {}
         processed_data_pd = pd.DataFrame()
         data = data_partitions.repartition(
             partition_size="100MB")  # data is a dask dataframe
+        # data = data_partitions.repartition(
+        #     npartitions=1000).partitions[0]  # data is a dask dataframe
         logging.info('process domain data with {} rows and {} partitions'.format(
-            len(data_partitions), data_partitions.npartitions))
-
-        res_arr = data.apply(domain_helper, axis=1, args=(
-            crawl_scope, citation_scope,), meta='object')
-
-        # update 'citation url or text alias', 'citation name', 'anchor text' using pd.update
-        # update publisher, tags, name
-        res_pd = pd.DataFrame(res_arr, columns=[
-            'citation url or text alias',
-            'citation name',
-            'anchor text',
-            'found_aliases',
-            'associated publisher',
-            'tags',
-            'name'], index=res_arr.index)
+            len(data), data.npartitions))
         data_pd = data.compute()  # data_pd is a panda dataframe
-        data_pd.update(res_pd)
+
+        ###
+        res_list = []
+        for index in data_pd.index:
+            res_arr = domain_helper(
+                data_pd.loc[index], crawl_scope, citation_scope)
+            res_list.append(res_arr)
+
+        res_list = list(zip(*res_list))
+
+        data_pd['citation url or text alias'] = list(res_list[0])
+        data_pd['citation name'] = list(res_list[1])
+        data_pd['anchor text'] = list(res_list[2])
+        data_pd['associated publisher'] = list(res_list[4])
+        data_pd['tags'] = list(res_list[5])
+        data_pd['name'] = list(res_list[6])
+        ###
+
+        # res_arr = data.apply(domain_helper, axis=1, args=(
+        #     crawl_scope, citation_scope,), meta='object')
+
+        # # update 'citation url or text alias', 'citation name', 'anchor text' using pd.update
+        # # update publisher, tags, name
+        # res_pd = pd.DataFrame(res_arr, columns=[
+        #     'citation url or text alias',
+        #     'citation name',
+        #     'anchor text',
+        #     'found_aliases',
+        #     'associated publisher',
+        #     'tags',
+        #     'name'], index=res_arr.index)
+
+        # data_pd.update(res_pd)
 
         # get referrals update
         logging.info("getting referrals update")
-        found_aliases_arr = res_pd['found_aliases']
+        found_aliases_arr = list(res_list[3])
+        i = 0
         for node in data_pd.index:
             for link in ast.literal_eval(data_pd.loc[node]['found_urls']):
                 # save all referrals where each key is
                 # each link in 'found_urls'
                 # and the value is this article's id
                 if link['url'] in referrals:
-                    referrals[link['url']].append(data_pd.loc[node]['id'])
+                    referrals[link['url']].append(
+                        data_pd.loc[node]['domain'])
                 else:
-                    referrals[link['url']] = [data_pd.loc[node]['id']]
+                    referrals[link['url']] = [data_pd.loc[node]['domain']]
 
             # looks for sources in found aliases, and adds it to the linking
-            for source in ast.literal_eval(found_aliases_arr.loc[node]):
+            for source in ast.literal_eval(found_aliases_arr[i]):
                 if source in referrals:
-                    referrals[source].append(data_pd.loc[node]['id'])
+                    referrals[source].append(data_pd.loc[node]['domain'])
                 else:
-                    referrals[source] = [data_pd.loc[node]['id']]
+                    referrals[source] = [data_pd.loc[node]['domain']]
+            i += 1
 
         # update completed to True
         data_pd.completed = True
