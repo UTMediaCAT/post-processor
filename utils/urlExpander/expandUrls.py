@@ -9,82 +9,108 @@ import os
 import ast
 import sys
 import requests
+import logging
+import timeit
+import subprocess
+from socket import timeout
 from multiprocessing import Process, Manager
+
+logging.basicConfig(filename='./logs/error.log', level=logging.INFO, filemode='w')  # nopep8
 
 
 def expand_urls(filename):
     source = sys.argv[1] if sys.argv[1].endswith('/') else sys.argv[1] + '/'
     fullFilename = source + filename
     print('processing file: ', filename)
-    copy = []
+    # copy = []
     fieldnames = None
     line_num = 0
     i = 0
-    with open(fullFilename, mode='r', encoding='utf-8-sig') as csv_file:
-        for line in csv.DictReader(csv_file):
-            if (i % 100 == 0):
-                print(i)
-            i = i + 1
-            d = {}
-        #    print(line.keys())
-            if fieldnames == None:
-                fieldnames = line.keys()
-            for key in line.keys():
-                # copy over non-URL values
-                if key != 'citation_urls':
-                    d[key] = line[key]
-                else:  # URLs need to expand
-                    urls = ast.literal_eval(line['citation_urls'])
-                    '''
-                    try:
-                        expand_urls = urlexpander.expand(urls)
-                    except Exception:
-                    '''
-                    expanded_urls = []
-                    for url in urls:  # expand each URL
-
-                        # url is already expanded
-                        if ('www' in url) or ('https://twitter.com/' in url):
-                            expanded_urls.append(url)
-                            continue
-
-                        try:
-                            expanded = urlexpander.expand(url)
-                            if ('ERROR' in expanded):
-                                try:
-                                    # try to request the expanded url, timeout after 15s
-                                    re = requests.get(url, timeout=15)
-                                    expanded = re.url
-                                except requests.exceptions.Timeout:
-                                    print('timeout at', url)
-                                    result = os.popen(
-                                        'node getExpandedURL ' + url).read().replace('\n', '')
-                                    expanded = result
-
-                        except Exception:
-                            # if unable to expand URL, use the original URL
-                            print('failed at', url)
-                            expanded = url
-                        expanded_urls.append(expanded)
-                    d['citation_urls'] = str(expanded_urls)
-            copy.append(d)
-            line_num += 1
+    start = timeit.default_timer()
     dest = sys.argv[2] if sys.argv[2].endswith('/') else sys.argv[2] + '/'
-    # write the result to a new file
     with open(dest + filename, 'w', encoding='utf-8-sig') as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-        for elem in copy:
-            writer.writerow(elem)
+
+        with open(fullFilename, mode='r', encoding='utf-8-sig') as csv_file:
+            for line in csv.DictReader(csv_file):
+                if (i % 1000 == 0):
+                    print(filename, i)
+                d = {}
+             #    print(line.keys())
+                if fieldnames == None:
+                    fieldnames = line.keys()
+                for key in line.keys():
+                    # copy over non-URL values
+                    if key != 'citation_urls':
+                        d[key] = line[key]
+                    else:  # URLs need to expand
+                        urls = ast.literal_eval(line['citation_urls'])
+                        '''
+                        try:
+                            expand_urls = urlexpander.expand(urls)
+                        except Exception:
+                        '''
+                        expanded_urls = []
+                        for url in urls:  # expand each URL
+
+                            # url is already expanded
+                            if ('www' in url) or ('https://twitter.com/' in url):
+                                expanded_urls.append(url)
+                                continue
+
+                            try:
+                                expanded = urlexpander.expand(url)
+                                # proc = subprocess.Popen(['python3', 'urlExpanderHelper.py',
+                                #                          url], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='')
+
+                                # expanded = proc.communicate(
+                                #     timeout=10)[0].decode('utf8').strip()
+
+                                if ('ERROR' in expanded):
+                                    try:
+                                        # try to request the expanded url, timeout after 5s
+                                        re = requests.get(url, timeout=5)
+                                        expanded = re.url
+                                    except requests.exceptions.Timeout:
+                                        logging.info('timeout at ' + str(url))
+                                        proc = subprocess.Popen(['node', 'getExpandedURL.js',
+                                                                 url], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='')
+
+                                        expanded = proc.communicate(
+                                            timeout=5)[0].decode('utf8').strip()
+
+                            except Exception:
+                                # if unable to expand URL, use the original URL
+                                logging.info('failed at ' + str(url))
+                                expanded = url
+                            expanded_urls.append(expanded)
+                        d['citation_urls'] = str(expanded_urls)
+                # copy.append(d)
+                if (i == 0):
+                    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                    writer.writeheader()
+
+                # write result to a new file
+                writer.writerow(d)
+                i = i + 1
+                line_num += 1
+
+    # write the result to a new file
+    # with open(dest + filename, 'w', encoding='utf-8-sig') as csvfile:
+    #     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+    #     writer.writeheader()
+    #     for elem in copy:
+    #         writer.writerow(elem)
+    stop = timeit.default_timer()
     print('complete processing', filename)
+    print('Time: ', stop - start)
     # Work complete, kill the process
-    sys.exit(0)
 
 
 def initialize(a):
     # expand URLs for each assigned CSV
     for assignment in a:
         expand_urls(assignment)
+    sys.exit(0)
 
 
 if __name__ == '__main__':
