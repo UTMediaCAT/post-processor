@@ -1,0 +1,20 @@
+{
+    "title":"WarnerMedia News & Sports Privacy Policy - Second",
+    "url":"https://www.aljazeera.com/somelink",
+    "author_metadata":null,
+    "date":"",
+    "html_content":"",
+    "article_text":"some text here",
+    "article_len":46651,
+    "domain":"https://www.aljazeera.com/",
+    "found_urls":[
+        {
+            "title": "testing",
+            "url": "https://twitter.com/a_zionist/status/4"
+        },
+        {
+            "title":" ",
+            "url":"https://twitter.com/IsraelinIndia/status/1"
+        }
+    ]
+}

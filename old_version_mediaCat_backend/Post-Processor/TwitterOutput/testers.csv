@@ -1,0 +1,5 @@
+﻿"Hit Record Unique ID","URL to article/Tweet","Source","Location","Hit Type","Passed through tags","Associated Publisher","Referring Hit Record Unique ID","Authors","Plain Text of Article or Tweet","Date","Mentions","Hashtags","Found URL"
+1,"https://twitter.com/IsraelinIndia/status/1","@IsraelinIndia","","Twitter Handle","Twitter Journalists","","","Israel in India","Al Jazeera said ...","2017-07-04","[]","[]","['https://www.aljazeera.com/second_url']"
+2,"https://twitter.com/a_zionist/status/2","@a_zionist","","Twitter Handle","Twitter Journalists","","","((A. Zionist))","Israeli PM","2017-07-04","[]","[]","['https://www.aljazeera.com/somelink']"
+3,"https://twitter.com/IsraelinIndia/status/3","@IsraelinIndia","","Twitter Handle","Twitter Journalists","","","","","2017-07-04","[]","[]","['https://twitter.com/a_zionist/status/2']"
+4,"https://twitter.com/a_zionist/status/4","@a_zionist","","Twitter Handle","Twitter Journalists","","","((A. Zionist))","hello @IsraelinIndia","2017-07-04","[]","[]","[]"
