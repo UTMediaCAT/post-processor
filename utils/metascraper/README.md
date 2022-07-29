@@ -2,7 +2,7 @@
 This tool can be used to populate the `title_metascraper, author_metascraper, date, html_content, article_text` fields of JSONs produced by the domain crawler.
 
 ## Usage
-First install the required packages if not already installed, `npm i metascraper metascraper-author metascraper-date metascraper-title got`
+First install the required packages if not already installed, `npm i`
 
 Create the output directory inside the metascraper directory, `mkdir DatedOutput`
 
