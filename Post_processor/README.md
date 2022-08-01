@@ -1,6 +1,7 @@
 # Post-processor
 ```
 cd Post-Processor
+pip3 install -r requirements.txt
 python3 processor.py
 ```
 ### Advanced Usage
