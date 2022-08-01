@@ -7,8 +7,8 @@ python3 processor.py
 The post-processor also supports multi-processing for more efficient performance, to utilize this feature, run `python3 processor.py -num_procs=x -limit=y` where `x` is the number of processes to use and `y` is the memory limit (in bytes) of the local data after which it will be written to disk. Increasing `-limit` will prevent memory errors but may reduce performance speed. Recommended usage: `python3 processor.py -num_procs=10 -limit=5000000`
 
 Required files and folder structure within Post-Processor directory:
-- DomainOutput: holds all domain crawler output files
-- TwitterOutput: holds all twitter crawler output files
+- DataDomain: holds all domain crawler output files
+- DataTwitter: holds all twitter crawler output files
 - crawl_scope.csv: scope file that contains all the crawl domains
 - citation_scope.csv: scope file that contains all the citation domains
 - Output: a folder to hold the output of the processor, including output.csv, output.xlsx and interest_output.json (can be empty prior to running)
