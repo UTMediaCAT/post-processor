@@ -13,11 +13,8 @@ python3 processor.py
 - Output: a folder to hold the output of the processor, including output.csv, output.xlsx and interest_output.json (can be empty prior to running)
 - Saved: a folder to hold saved intermediate states of files (can be empty)
 - logs: a folder to hold logs (can be empty)
-- tempFiles: a folder to hold all the temporary referral files created, must contain the two following sub-directories
-    - Domain: for temporary domain files
-    - Twitter: for temporary twitter files
     
-output.xlsx will include an row for URL x from **DomainOutput** iff:
+output.csv will include an row for URL x from **DomainOutput** iff:
 - x's domain is in **crawl scope** 
 - x contains citation (text alias, or twitter handler) with domain from **citation scope**
 
