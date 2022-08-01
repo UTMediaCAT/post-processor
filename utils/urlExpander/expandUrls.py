@@ -66,17 +66,21 @@ def expand_urls(filename):
                                 #     timeout=10)[0].decode('utf8').strip()
 
                                 if ('ERROR' in expanded):
-                                    try:
-                                        # try to request the expanded url, timeout after 5s
-                                        re = requests.get(url, timeout=5)
-                                        expanded = re.url
-                                    except requests.exceptions.Timeout:
-                                        logging.info('timeout at ' + str(url))
-                                        proc = subprocess.Popen(['node', 'getExpandedURL.js',
-                                                                 url], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='')
+                                    # try:
+                                    #     # try to request the expanded url, timeout after 5s
+                                    #     re = requests.get(url, timeout=5)
+                                    #     expanded = re.url
+                                    # except requests.exceptions.Timeout:
+                                    #     logging.info('timeout at ' + str(url))
+                                    #     proc = subprocess.Popen(['node', 'getExpandedURL.js',
+                                    #                              url], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='')
 
-                                        expanded = proc.communicate(
-                                            timeout=5)[0].decode('utf8').strip()
+                                    #     expanded = proc.communicate(
+                                    #         timeout=5)[0].decode('utf8').strip()
+                                    proc = subprocess.Popen(['node', 'getExpandedURL.js',
+                                                            url], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='')
+                                    expanded = proc.communicate(
+                                        timeout=5)[0].decode('utf8').strip()
 
                             except Exception:
                                 # if unable to expand URL, use the original URL
