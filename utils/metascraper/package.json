@@ -2,6 +2,7 @@
   "dependencies": {
     "@mozilla/readability": "^0.4.2",
     "jsdom": "^19.0.0",
+    "got": "^11.8.3",
     "metascraper": "^5.28.2",
     "metascraper-author": "^5.28.2",
     "metascraper-date": "^5.28.2",

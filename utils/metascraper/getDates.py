@@ -4,6 +4,7 @@ import csv
 import subprocess
 from socket import timeout
 import sys
+import pandas as pd
 import time
 from multiprocessing import Process, Manager
 ROWS_PER_CSV = 10000
@@ -20,58 +21,69 @@ def create_csv_title(file_name):
 
 def getDate(files, proc, i):
     file_name = './DatedOutput/' + str(proc) + '_output_' + str(i) + '.csv'
-    create_csv_title(file_name)
-    with open(file_name, 'a') as new_file:
-        for f in files:
-            with open(f, 'r') as json_file:
-                d = json.loads(json_file.read())
+    try:
+        df = pd.read_csv(file_name)
+    except:
+        df = pd.DataFrame()
 
-                try:
-                    proc = subprocess.Popen(['node', 'dates.js',
-                                            d['url']], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='')
+    if (len(df) >= ROWS_PER_CSV):
+        print("already processed: " + file_name)
+        return
+    if (len(df) > 0):
+        os.remove(file_name)
+    print("try to process: " + file_name)
 
-                    results = proc.communicate(timeout=5)[0].decode(
-                        'utf8').split("\nsplit\nsplit\n")
-                except Exception:
-                    results = ['', '', '', '', '']
+    for f in files:
+        with open(f, 'r') as json_file:
+            d = json.loads(json_file.read())
 
-                try:
-                    date = results[0]
-                except Exception:
-                    date = ""
-                try:
-                    author = results[1]
-                except Exception:
-                    author = ""
-                try:
-                    title = results[2]
-                except Exception:
-                    title = ""
-                try:
-                    htmlcontent = results[3]
-                except:
-                    htmlcontent = ""
-                try:
-                    textcontent = results[4]
-                except:
-                    textcontent = ""
-                row = (
-                    f[f.rfind('/')+1:].replace('.json', ''),
-                    title,
-                    d['url'],
-                    author,
-                    date,
-                    htmlcontent,
-                    textcontent,
-                    d['domain'],
-                    d['found_urls']
-                )
+            try:
+                dateFile = "datesWithHTML.js" if withHTML else "dates.js"
+                proc = subprocess.Popen(['node', dateFile,
+                                        d['url']], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='')
 
-                csv_writer = csv.writer(new_file)
-                csv_writer.writerow(row)
-            json_file.close()
+                results = proc.communicate(timeout=2)[0].decode(
+                    'utf8').split("\nsplit\nsplit\n")
+            except Exception:
+                results = ['', '', '', '', '']
 
-    new_file.close()
+            try:
+                date = results[0]
+            except Exception:
+                date = ""
+            try:
+                author = results[1]
+            except Exception:
+                author = ""
+            try:
+                title = results[2]
+            except Exception:
+                title = ""
+            try:
+                htmlcontent = results[3]
+            except:
+                htmlcontent = ""
+            try:
+                textcontent = results[4]
+            except:
+                textcontent = ""
+            row = {
+                'id': f[f.rfind('/')+1:].replace('.json', ''),
+                'title': title,
+                'url': d['url'],
+                'author': author,
+                'date':  date,
+                'html_content': htmlcontent,
+                'article_text': textcontent,
+                'domain':  d['domain'],
+                'found_urls': d['found_urls']
+            }
+
+            df = df.append(row, ignore_index=True)
+        json_file.close()
+    df.to_csv(file_name)
+    print("finished processing: " + file_name)
+    return
 
 
 def divide(files):
@@ -89,7 +101,8 @@ def init(files, proc):
 
 
 if __name__ == '__main__':
-    num_procs = 20
+    withHTML = True
+    num_procs = 10
     process_index = 0
     assignments = {k: [] for k in range(num_procs)}
     for folder in os.listdir(sys.argv[1]):
