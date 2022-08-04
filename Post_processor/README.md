@@ -4,6 +4,7 @@ cd Post-Processor
 pip3 install -r requirements.txt
 python3 processor.py
 ```
+**NOTE: more detailed instructions and testing can be find in `compiler.ipynb`**
 
 ### Required files and folder structure within Post-Processor directory:
 - DataDomain: holds all domain crawler output files
