@@ -203,7 +203,6 @@ def load_domain(path):
     all_files = glob.glob(os.path.join(path, "*.csv"))
     print(list(all_files))
 
-    # doesn't create a list, nor does it append to one
     try:
         domain_df = pd.concat((pd.read_csv(f)
                               for f in all_files), ignore_index=True)
@@ -217,10 +216,13 @@ def load_domain(path):
     except:
         domain_df = create_empty_domain_dataframe()
 
-    domain_df = domain_df.set_index('url')
-
     # store the domain data in Saved
     domain_df = dd.from_pandas(domain_df, npartitions=1)
+    domain_df = domain_df[['url', 'article_text', 'author', 'date', 'domain', 'found_urls',
+                           'html_content', 'id', 'title', 'type', 'completed', 'retweet_count',
+                           'reply_count', 'like_count', 'quote_count']]
+    domain_df = domain_df.drop_duplicates(subset=['url'])
+    domain_df = domain_df.set_index('url')
     domain_df.to_parquet('./Saved/domain_data.parquet', engine="pyarrow")
 
     domain_timer_end = timer()

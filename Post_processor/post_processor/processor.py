@@ -38,7 +38,10 @@ def parse_referrals(article, domain_referrals, twitter_referrals):
 
 
 def getNumRef(row):
-    return len(ast.literal_eval(row["referring name"]))
+    try:
+        return len(ast.literal_eval(row["referring name"]))
+    except Exception:
+        return 0
 
 
 def process_crawler(crawl_scope, citation_scope):
@@ -84,15 +87,20 @@ def process_crawler(crawl_scope, citation_scope):
     twitter_data['referring name'] = ''
     twitter_data['number of referrals'] = ''
     twitter_data['url_dup'] = twitter_data.index
-    twitter_res = twitter_data.apply(parse_referrals, axis=1, args=(
+    twitter_data['referring name'] = twitter_data.apply(parse_referrals, axis=1, args=(
         domain_referrals, twitter_referrals, ), meta='object')
-    twitter_res_pd = pd.DataFrame(twitter_res, columns=[
-        'referring name',
-        'number of referrals'], index=twitter_res.index)
-    # twitter_data_pd is a panda dataframe
-    twitter_data_pd = twitter_data.compute()
-    twitter_data_pd.update(twitter_res_pd)
-    peocessed_twitter_data = dd.from_pandas(twitter_data_pd, npartitions=1)
+    twitter_data['number of referrals'] = twitter_data.apply(
+        getNumRef, axis=1, meta='object')
+    # twitter_res = twitter_data.apply(parse_referrals, axis=1, args=(
+    #     domain_referrals, twitter_referrals, ), meta='object')
+    # twitter_res_pd = pd.DataFrame(twitter_res, columns=[
+    #     'referring name',
+    #     'number of referrals'], index=twitter_res.index)
+    # # twitter_data_pd is a panda dataframe
+    # twitter_data_pd = twitter_data.compute()
+    # twitter_data_pd.update(twitter_res_pd)
+    # peocessed_twitter_data = dd.from_pandas(twitter_data_pd, npartitions=1)
+    peocessed_twitter_data = twitter_data
 
     ### Save the processed data ###
     peocessed_domian_data.to_parquet(

@@ -17,64 +17,66 @@ def find_twitter_citation_aliases(tweet, scope):
     citation_name = []
 
     node_twitter_handle = tweet['domain']
+    try:
+        for source, info in scope.items():
 
-    for source, info in scope.items():
+            # skip recursive citation
 
-        # skip recursive citation
+            needskip = False
+            for i in range(0, len(info['twitter_handles'])):
+                if (info['twitter_handles'][i].replace('@', '').strip().lower() == node_twitter_handle.replace('@', '').strip().lower()):
+                    needskip = True
+            if needskip:
+                continue
 
-        needskip = False
-        for i in range(0, len(info['twitter_handles'])):
-            if (info['twitter_handles'][i].replace('@', '').strip().lower() == node_twitter_handle.replace('@', '').strip().lower()):
-                needskip = True
-        if needskip:
-            continue
+            # find all url with domain matching scope
+            if 'http' in source:
+                ext = tldextract.extract(source)
 
-        # find all url with domain matching scope
-        if 'http' in source:
-            ext = tldextract.extract(source)
+                if ext[0] == '':
+                    domain = ext[1] + '.' + ext[2] + '/'
+                else:
+                    domain = '.'.join(ext) + '/'
 
-            if ext[0] == '':
-                domain = ext[1] + '.' + ext[2] + '/'
-            else:
-                domain = '.'.join(ext) + '/'
+                for url in tweet['found_urls']:
+                    if domain.lower() in url.lower():
+                        citation_url_or_text_alias.append(url)
+                        citation_name.append(info['Name'])
+                        if source not in found_aliases:
+                            found_aliases.append(source)
 
             for url in tweet['found_urls']:
-                if domain.lower() in url.lower():
-                    citation_url_or_text_alias.append(url)
-                    citation_name.append(info['Name'])
+                for twitter_handle in info['twitter_handles']:
+                    twitter_url = 'https://twitter.com/' + \
+                        twitter_handle.replace('@', '') + '/'
+                    if twitter_url.lower() in url.lower() and (url not in citation_url_or_text_alias):
+                        citation_url_or_text_alias.append(url)
+                        citation_name.append(info['Name'])
+                        if source not in found_aliases:
+                            found_aliases.append(source)
+
+            # find all matching mentions of the tweet
+            for mention in tweet['Mentions']:
+                for twitter_handle in info['twitter_handles']:
+                    if twitter_handle.replace('@', '').lower() == mention.lower():
+                        citation_url_or_text_alias.append(twitter_handle)
+                        citation_name.append(info['Name'])
+                        if source not in found_aliases:
+                            found_aliases.append(source)
+
+            # find all matching text aliases of the tweet text
+            aliases = info['aliases']
+            for i in range(0, len(aliases)):
+                pattern = r"( |\"|')" + re.escape(aliases[i]) + r"( |\"|'|,)"
+                if re.search(pattern, tweet['article_text'], re.IGNORECASE) and (aliases[i] not in citation_url_or_text_alias):
+                    citation_url_or_text_alias.append(aliases[i])
+                    citation_name.append(info["Name"])
                     if source not in found_aliases:
                         found_aliases.append(source)
 
-        for url in tweet['found_urls']:
-            for twitter_handle in info['twitter_handles']:
-                twitter_url = 'https://twitter.com/' + \
-                    twitter_handle.replace('@', '') + '/'
-                if twitter_url.lower() in url.lower() and (url not in citation_url_or_text_alias):
-                    citation_url_or_text_alias.append(url)
-                    citation_name.append(info['Name'])
-                    if source not in found_aliases:
-                        found_aliases.append(source)
-
-        # find all matching mentions of the tweet
-        for mention in tweet['Mentions']:
-            for twitter_handle in info['twitter_handles']:
-                if twitter_handle.replace('@', '').lower() == mention.lower():
-                    citation_url_or_text_alias.append(twitter_handle)
-                    citation_name.append(info['Name'])
-                    if source not in found_aliases:
-                        found_aliases.append(source)
-
-        # find all matching text aliases of the tweet text
-        aliases = info['aliases']
-        for i in range(0, len(aliases)):
-            pattern = r"( |\"|')" + re.escape(aliases[i]) + r"( |\"|'|,)"
-            if re.search(pattern, tweet['article_text'], re.IGNORECASE) and (aliases[i] not in citation_url_or_text_alias):
-                citation_url_or_text_alias.append(aliases[i])
-                citation_name.append(info["Name"])
-                if source not in found_aliases:
-                    found_aliases.append(source)
-
-    return str(citation_url_or_text_alias), str(citation_name), str([]), str(found_aliases)
+        return str(citation_url_or_text_alias), str(citation_name), str([]), str(found_aliases)
+    except Exception:
+        return str(citation_url_or_text_alias), str(citation_name), str([]), str(found_aliases)
 
 
 def get_twitter_handle_info(tweet, crawl_scope):
@@ -189,22 +191,25 @@ def process_twitter(crawl_scope, citation_scope):
 
         i = 0
         for node in data_pd.index:
-            for link in ast.literal_eval(data_pd.loc[node]['found_urls']):
-                # save all referrals where each key is
-                # each link in 'found_urls'
-                # and the value is this article's id
-                if link in referrals:
-                    referrals[link].append(data_pd.loc[node]['domain'])
-                else:
-                    referrals[link] = [data_pd.loc[node]['domain']]
+            try:
+                for link in ast.literal_eval(data_pd.loc[node]['found_urls']):
+                    # save all referrals where each key is
+                    # each link in 'found_urls'
+                    # and the value is this article's id
+                    if link in referrals:
+                        referrals[link].append(data_pd.loc[node]['domain'])
+                    else:
+                        referrals[link] = [data_pd.loc[node]['domain']]
 
-            # looks for sources in found aliases, and adds it to the linking
-            for source in ast.literal_eval(found_aliases_arr[i]):
-                if source in referrals:
-                    referrals[source].append(data_pd.loc[node]['domain'])
-                else:
-                    referrals[source] = [data_pd.loc[node]['domain']]
-            i += 1
+                # looks for sources in found aliases, and adds it to the linking
+                for source in ast.literal_eval(found_aliases_arr[i]):
+                    if source in referrals:
+                        referrals[source].append(data_pd.loc[node]['domain'])
+                    else:
+                        referrals[source] = [data_pd.loc[node]['domain']]
+                i += 1
+            except Exception:
+                logging.info(data_pd.loc[node])
 
         # update completed to True
         data_pd.completed = True

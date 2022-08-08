@@ -29,59 +29,63 @@ def find_domain_citation_aliases(article, scope):
     citation_name = []
     anchor_text = []
     sequence = article['html_content']
-    for source, info in scope.items():
+    try:
+        for source, info in scope.items():
 
-        if 'http' in source:
-            # find the in-scope citation url in html_content
-            ext_node = tldextract.extract(article['domain'])
-            ext = tldextract.extract(source)
+            if 'http' in source:
+                # find the in-scope citation url in html_content
+                ext_node = tldextract.extract(article['domain'])
+                ext = tldextract.extract(source)
 
-            # skip recursive citation
-            if (ext_node == ext):
-                continue
+                # skip recursive citation
+                if (ext_node == ext):
+                    continue
 
-            if ext[0] == '':
-                domain = ext[1] + '.' + ext[2]
-            else:
-                domain = '.'.join(ext)
-            pattern = r"<a\s+href=([\"'])(http://www.|http://|https://www.|https://)" + \
-                re.escape(domain) + r"/(.*?)([\"'])(.*?)(>)(.*?)(</a>)"
-            matches = re.findall(pattern, sequence, re.IGNORECASE)
-            if matches:
-                for match in matches:
-                    citation_url = match[1] + domain + '/' + match[2]
-                    # sometime non english article list hyperlink multiple times for a single citation
-                    # check duplicate here
-                    if citation_url not in citation_url_or_text_alias:
-                        citation_url_or_text_alias.append(citation_url)
-                        anchor_text.append(match[6])
+                if ext[0] == '':
+                    domain = ext[1] + '.' + ext[2]
+                else:
+                    domain = '.'.join(ext)
+                pattern = r"<a\s+href=([\"'])(http://www.|http://|https://www.|https://)" + \
+                    re.escape(domain) + r"/(.*?)([\"'])(.*?)(>)(.*?)(</a>)"
+                matches = re.findall(pattern, sequence, re.IGNORECASE)
+                if matches:
+                    for match in matches:
+                        citation_url = match[1] + domain + '/' + match[2]
+                        # sometime non english article list hyperlink multiple times for a single citation
+                        # check duplicate here
+                        if citation_url not in citation_url_or_text_alias:
+                            citation_url_or_text_alias.append(citation_url)
+                            anchor_text.append(match[6])
+                            citation_name.append(info["Name"])
+                        if source not in found_aliases:
+                            found_aliases.append(source)
+
+            # find in-scope aliases in html_content
+            if info['aliases']:
+                aliases = info['aliases']
+                for i in range(0, len(aliases)):
+                    pattern = r"( |\"|')" + \
+                        re.escape(aliases[i]) + r"( |\"|'|,)"
+                    if re.search(pattern, sequence, re.IGNORECASE):
+                        citation_url_or_text_alias.append(aliases[i])
                         citation_name.append(info["Name"])
-                    if source not in found_aliases:
-                        found_aliases.append(source)
+                        if source not in found_aliases:
+                            found_aliases.append(source)
 
-        # find in-scope aliases in html_content
-        if info['aliases']:
-            aliases = info['aliases']
-            for i in range(0, len(aliases)):
-                pattern = r"( |\"|')" + re.escape(aliases[i]) + r"( |\"|'|,)"
-                if re.search(pattern, sequence, re.IGNORECASE):
-                    citation_url_or_text_alias.append(aliases[i])
-                    citation_name.append(info["Name"])
-                    if source not in found_aliases:
-                        found_aliases.append(source)
+            # find twitter_handles in html_content
+            if info['twitter_handles']:
+                handles = info['twitter_handles']
+                for i in range(0, len(handles)):
+                    pattern = r"@" + re.escape(handles[i])
+                    if re.search(pattern, sequence, re.IGNORECASE):
+                        citation_url_or_text_alias.append(handles[i])
+                        citation_name.append(info['Name'])
+                        if source not in found_aliases:
+                            found_aliases.append(source)
 
-        # find twitter_handles in html_content
-        if info['twitter_handles']:
-            handles = info['twitter_handles']
-            for i in range(0, len(handles)):
-                pattern = r"@" + re.escape(handles[i])
-                if re.search(pattern, sequence, re.IGNORECASE):
-                    citation_url_or_text_alias.append(handles[i])
-                    citation_name.append(info['Name'])
-                    if source not in found_aliases:
-                        found_aliases.append(source)
-
-    return str(citation_url_or_text_alias), str(citation_name),  str(anchor_text), str(found_aliases)
+        return str(citation_url_or_text_alias), str(citation_name),  str(anchor_text), str(found_aliases)
+    except Exception:
+        return str(citation_url_or_text_alias), str(citation_name),  str(anchor_text), str(found_aliases)
 
 
 def get_domain_info(article, crawl_scope):
@@ -192,23 +196,26 @@ def process_domain(crawl_scope, citation_scope):
         found_aliases_arr = list(res_list[3])
         i = 0
         for node in data_pd.index:
-            for link in ast.literal_eval(data_pd.loc[node]['found_urls']):
-                # save all referrals where each key is
-                # each link in 'found_urls'
-                # and the value is this article's id
-                if link['url'] in referrals:
-                    referrals[link['url']].append(
-                        data_pd.loc[node]['domain'])
-                else:
-                    referrals[link['url']] = [data_pd.loc[node]['domain']]
+            try:
+                for link in ast.literal_eval(data_pd.loc[node]['found_urls']):
+                    # save all referrals where each key is
+                    # each link in 'found_urls'
+                    # and the value is this article's id
+                    if link['url'] in referrals:
+                        referrals[link['url']].append(
+                            data_pd.loc[node]['domain'])
+                    else:
+                        referrals[link['url']] = [data_pd.loc[node]['domain']]
 
-            # looks for sources in found aliases, and adds it to the linking
-            for source in ast.literal_eval(found_aliases_arr[i]):
-                if source in referrals:
-                    referrals[source].append(data_pd.loc[node]['domain'])
-                else:
-                    referrals[source] = [data_pd.loc[node]['domain']]
-            i += 1
+                # looks for sources in found aliases, and adds it to the linking
+                for source in ast.literal_eval(found_aliases_arr[i]):
+                    if source in referrals:
+                        referrals[source].append(data_pd.loc[node]['domain'])
+                    else:
+                        referrals[source] = [data_pd.loc[node]['domain']]
+                i += 1
+            except Exception:
+                logging.info(data_pd.loc[node])
 
         # update completed to True
         data_pd.completed = True
