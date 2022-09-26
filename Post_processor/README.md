@@ -2,7 +2,7 @@
 ```
 cd Post-Processor
 pip3 install -r requirements.txt
-python3 processor.py
+python3 compilier.py
 ```
 **NOTE: more detailed instructions and testing can be find in `compiler.ipynb`**
 
