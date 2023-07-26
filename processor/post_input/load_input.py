@@ -58,7 +58,7 @@ def load_scope(file):
                                      'aliases': aliases,
                                      'twitter_handles': twitters}
             i = i + 1
-    write_to_file(scope, "./Saved/processed_" + file.replace('./',
+    write_to_file(scope, "./saved/processed_" + file.replace('./',
                   '').replace('.csv', '') + ".json")
     return scope
 
@@ -89,8 +89,8 @@ def create_empty_twitter_dataframe():
 
 def load_twitter(path):
     '''Loads the twitter output csv from
-    folder ./DataTwitter/ into dask DataFrame
-    Stores data to /Saved/twitter_data.parquet.'''
+    folder ./data_twitter/ into dask DataFrame
+    Stores data to /saved/twitter_data.parquet.'''
 
     twitter_timer = timer()
     logging.info("loading twitter data")
@@ -162,9 +162,9 @@ def load_twitter(path):
     # set url as the index
     twitter_df = twitter_df.set_index('url')
 
-    # store the twitter data in Saved
+    # store the twitter data in saved
     twitter_df.to_parquet(
-        './Saved/twitter_data.parquet', engine="pyarrow")
+        './saved/twitter_data.parquet', engine="pyarrow")
 
     twitter_timer_end = timer()
     logging.info("Time to read twitter files took " + str(twitter_timer_end - twitter_timer) + " seconds")  # nopep8
@@ -194,8 +194,8 @@ def create_empty_domain_dataframe():
 
 def load_domain(path):
     """Loads the domain output csv from
-    folder ./DataDomain/ into a dictionary.
-    Stores data to Saved/domain_data.parquet."""
+    folder ./data_domain/ into a dictionary.
+    Stores data to saved/domain_data.parquet."""
 
     domain_timer = timer()
     logging.info("loading domain data")
@@ -216,14 +216,14 @@ def load_domain(path):
     except:
         domain_df = create_empty_domain_dataframe()
 
-    # store the domain data in Saved
+    # store the domain data in saved
     domain_df = dd.from_pandas(domain_df, npartitions=1)
     domain_df = domain_df[['url', 'article_text', 'author', 'date', 'domain', 'found_urls',
                            'html_content', 'id', 'title', 'type', 'completed', 'retweet_count',
                            'reply_count', 'like_count', 'quote_count']]
     domain_df = domain_df.drop_duplicates(subset=['url'])
     domain_df = domain_df.set_index('url')
-    domain_df.to_parquet('./Saved/domain_data.parquet', engine="pyarrow")
+    domain_df.to_parquet('./saved/domain_data.parquet', engine="pyarrow")
 
     domain_timer_end = timer()
     logging.info("Time to read domain files took " + str(domain_timer_end - domain_timer) + " seconds")  # nopep8
