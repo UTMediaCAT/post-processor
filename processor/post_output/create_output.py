@@ -9,10 +9,10 @@ def create_output():
     logging.info("creating output")
     start = timer()
 
-    # read data from Saved
-    domain_data = dd.read_parquet('./Saved/processed_domain_data.parquet').repartition(
+    # read data from saved
+    domain_data = dd.read_parquet('./saved/processed_domain_data.parquet').repartition(
         partition_size="100MB")
-    twitter_data = dd.read_parquet('./Saved/processed_twitter_data.parquet').repartition(
+    twitter_data = dd.read_parquet('./saved/processed_twitter_data.parquet').repartition(
         partition_size="100MB")
 
     # remove unwanted keys for domain_data
@@ -39,8 +39,8 @@ def create_output():
         output['name'].str.len() > 0) | (
         output['tags'].str.len() > 0))]
     output = output.repartition(1)
-    output.to_parquet('./Saved/final_output.parquet')
-    output.to_csv('./Output/output_*.csv')
+    output.to_parquet('./saved/final_output.parquet')
+    output.to_csv('./output/output_*.csv')
 
 
 if __name__ == '__main__':
