@@ -37,7 +37,10 @@ def parse_referrals(article, domain_referrals, twitter_referrals):
     return str(referring_articles)
 
 
-def getNumRef(row):
+def get_num_ref(row):
+    """
+    Return the number of referrals.
+    """
     try:
         return len(ast.literal_eval(row["referring name"]))
     except Exception:
@@ -71,7 +74,7 @@ def process_crawler(crawl_scope, citation_scope):
     domain_data['referring name'] = domain_data.apply(parse_referrals, axis=1, args=(
         domain_referrals, twitter_referrals, ), meta='object')
     domain_data['number of referrals'] = domain_data.apply(
-        getNumRef, axis=1, meta='object')
+        get_num_ref, axis=1, meta='object')
     # domain_data.assign(referring_name=len(
     #     ast.literal_eval(domain_data["referring name"].str)))
     # logging.info(domain_res.index)
@@ -81,7 +84,7 @@ def process_crawler(crawl_scope, citation_scope):
     # domian_data_pd = domain_data.compute()  # domian_data_pd is a panda dataframe
     # domian_data_pd.update(domain_res_pd)
     # dd.from_pandas(domian_data_pd, npartitions=1)
-    peocessed_domian_data = domain_data
+    processed_domain_data = domain_data
 
     ### Add referrals to twitter_data ###
     twitter_data['referring name'] = ''
@@ -90,7 +93,7 @@ def process_crawler(crawl_scope, citation_scope):
     twitter_data['referring name'] = twitter_data.apply(parse_referrals, axis=1, args=(
         domain_referrals, twitter_referrals, ), meta='object')
     twitter_data['number of referrals'] = twitter_data.apply(
-        getNumRef, axis=1, meta='object')
+        get_num_ref, axis=1, meta='object')
     # twitter_res = twitter_data.apply(parse_referrals, axis=1, args=(
     #     domain_referrals, twitter_referrals, ), meta='object')
     # twitter_res_pd = pd.DataFrame(twitter_res, columns=[
@@ -99,11 +102,11 @@ def process_crawler(crawl_scope, citation_scope):
     # # twitter_data_pd is a panda dataframe
     # twitter_data_pd = twitter_data.compute()
     # twitter_data_pd.update(twitter_res_pd)
-    # peocessed_twitter_data = dd.from_pandas(twitter_data_pd, npartitions=1)
-    peocessed_twitter_data = twitter_data
+    # processed_twitter_data = dd.from_pandas(twitter_data_pd, npartitions=1)
+    processed_twitter_data = twitter_data
 
     ### Save the processed data ###
-    peocessed_domian_data.to_parquet(
-        './Saved/processed_domain_data.parquet', engine="pyarrow")
-    peocessed_twitter_data.to_parquet(
-        './Saved/processed_twitter_data.parquet', engine="pyarrow")
+    processed_domain_data.to_parquet(
+        './saved/processed_domain_data.parquet', engine="pyarrow")
+    processed_twitter_data.to_parquet(
+        './saved/processed_twitter_data.parquet', engine="pyarrow")
