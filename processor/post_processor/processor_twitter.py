@@ -132,8 +132,8 @@ def process_twitter(crawl_scope, citation_scope):
     try:
         logging.info("Processing Twitter")
         start = timer()
-        # load domain_data from Saved
-        data_partitions = dd.read_parquet('./Saved/twitter_data.parquet')
+        # load domain_data from saved
+        data_partitions = dd.read_parquet('./saved/twitter_data.parquet')
         if (len(data_partitions) == 0):
             data_partitions['citation url or text alias'] = ''
             data_partitions['citation name'] = ''
@@ -223,7 +223,7 @@ def process_twitter(crawl_scope, citation_scope):
         logging.info("Finished Processing Twitter - Took " + str(end - start) + " seconds")  # nopep8
         return referrals, processed_data
     except Exception:
-        logging.warning('Exception at Processing Twitter, data written to Saved/')  # nopep8
+        logging.warning('Exception at Processing Twitter, data written to saved/')  # nopep8
         exc_type, exc_value, exc_traceback = sys.exc_info()
         logging.error(exc_value)
         logging.error(exc_type)
