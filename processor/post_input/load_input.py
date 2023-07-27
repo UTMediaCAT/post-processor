@@ -10,8 +10,14 @@ from post_utils.utils import write_to_file
 import sys
 import glob
 import os
-csv.field_size_limit(sys.maxsize)
-logging.basicConfig(filename='./logs/processor.log', level=logging.DEBUG, filemode='w')  # nopep8
+
+
+def init():
+    """
+    Initialize input script.
+    """
+    csv.field_size_limit(sys.maxsize)
+    logging.basicConfig(filename='./logs/processor.log', level=logging.DEBUG, filemode='w')  # nopep8
 
 
 def load_scope(file):
@@ -19,6 +25,8 @@ def load_scope(file):
     Loads the scope csv into a dictionary.
     Returns a dict of the scope with Source as key.
     """
+    # initialize script
+    init()
     # parse all the text aliases from each source using the scope file
     scope = {}
     i = 0

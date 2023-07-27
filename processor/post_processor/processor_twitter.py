@@ -7,8 +7,14 @@ import ast
 import sys
 import tldextract
 from post_utils.utils import row_parser
-logging.basicConfig(filename='./logs/processor.log',
-                    level=logging.DEBUG, filemode='w')
+
+
+def init():
+    """
+    Initialize twitter script.
+    """
+    logging.basicConfig(filename='./logs/processor.log',
+                        level=logging.DEBUG, filemode='w')
 
 
 def find_twitter_citation_aliases(tweet, scope):
@@ -129,6 +135,9 @@ def process_twitter(crawl_scope, citation_scope):
     Returns 2 dicts, one for the mutated data dictionary,
     and another dict of referrals.
     """
+    # initialize script
+    init()
+    # process twitter
     try:
         logging.info("Processing Twitter")
         start = timer()

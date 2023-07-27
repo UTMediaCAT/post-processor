@@ -3,7 +3,6 @@ import os
 import post_input.load_input as load_input
 import post_processor.processor as processor
 import post_output.create_output as output
-logging.basicConfig(filename='./logs/processor.log', level=logging.DEBUG, filemode='w')  # nopep8
 
 
 def parse_args():
@@ -48,6 +47,13 @@ def check_files():
         exit()
 
 
+def init():
+    """
+    Initialize the compiler script.
+    """
+    logging.basicConfig(filename='./logs/processor.log', level=logging.DEBUG, filemode='w')  # nopep8
+
+
 if __name__ == '__main__':
     ## SCRIPT PREPARATION ##
     # parse script arguments
@@ -56,6 +62,9 @@ if __name__ == '__main__':
     # check directories and files
     check_dirs()
     check_files()
+
+    # initialize script
+    init()
 
     ## LOAD INPUT DATA ##
     # load scopes

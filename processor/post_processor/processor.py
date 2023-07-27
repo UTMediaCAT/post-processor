@@ -5,8 +5,14 @@ import pandas as pd
 import ast
 import dask.dataframe as dd
 import logging
-logging.basicConfig(filename='./logs/processor.log',
-                    level=logging.DEBUG, filemode='w')
+
+
+def init():
+    """
+    Initialize processor script.
+    """
+    logging.basicConfig(filename='./logs/processor.log',
+                        level=logging.DEBUG, filemode='w')
 
 
 def parse_referrals(article, domain_referrals, twitter_referrals):
@@ -64,6 +70,10 @@ def process_crawler(crawl_scope, citation_scope):
 
     Outputs the post processing data into output.json and interest_output.json.
     """
+    # initialize script
+    init()
+
+    # crawling
     domain_referrals, domain_data = process_domain(crawl_scope, citation_scope)
     twitter_referrals, twitter_data = process_twitter(
         crawl_scope, citation_scope)

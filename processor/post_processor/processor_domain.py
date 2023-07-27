@@ -7,8 +7,14 @@ import ast
 import sys
 import tldextract
 from post_utils.utils import row_parser
-logging.basicConfig(filename='./logs/processor.log',
-                    level=logging.DEBUG, filemode='w')
+
+
+def init():
+    """
+    Initialize domain script.
+    """
+    logging.basicConfig(filename='./logs/processor.log',
+                        level=logging.DEBUG, filemode='w')
 
 
 def find_domain_citation_aliases(article, scope):
@@ -134,6 +140,9 @@ def process_domain(crawl_scope, citation_scope):
         Returns 2 dicts, one for the mutated data dictionary,
         and another dict of referrals.
     """
+    # initialize script
+    init()
+    # process the domain
     logging.info("Processing Domain")
     try:
         start = timer()

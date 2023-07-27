@@ -2,10 +2,20 @@ from timeit import default_timer as timer
 import dask.dataframe as dd
 import pandas as pd
 import logging
-logging.basicConfig(filename='./logs/processor.log', level=logging.DEBUG, filemode='w')  # nopep8
+
+
+def init():
+    """
+    Initialize output script.
+    """
+    logging.basicConfig(filename='./logs/processor.log', level=logging.DEBUG, filemode='w')  # nopep8
 
 
 def create_output():
+    # initialize script
+    init()
+
+    # start logging for output
     logging.info("creating output")
     start = timer()
 
