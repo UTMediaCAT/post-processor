@@ -10,6 +10,7 @@ from post_utils.utils import write_to_file
 import sys
 import glob
 import os
+from traceback import format_exc
 
 
 def init():
@@ -138,11 +139,11 @@ def load_twitter(path):
     try:
         twitter_df = read_twitter(path)
     except FileNotFoundError:
-        logging.info(f'Did not find {path}, creating empty dataframe...')
+        logging.info(f'did not find {path}, creating empty dataframe...')
         twitter_df = create_empty_twitter_dataframe()
     except:
-        logging.info(sys.exc_info()[2])
-        print(sys.exc_info()[2])
+        logging.info('error with twitter data\n' + format_exc())
+        print(format_exc())
         exit()
 
     # Modify the read dataframe
@@ -192,7 +193,7 @@ def load_twitter(path):
     twitter_df.to_parquet(
         './saved/twitter_data.parquet', engine="pyarrow")
     twitter_timer_end = timer()
-    logging.info("Time to read twitter files took " + str(twitter_timer_end - twitter_timer) + " seconds")  # nopep8
+    logging.info("time to read twitter files took " + str(twitter_timer_end - twitter_timer) + " seconds")  # nopep8
 
 
 def create_empty_domain_dataframe():
@@ -227,7 +228,7 @@ def load_domain(path):
     logging.info("loading domain data")
 
     all_files = glob.glob(os.path.join(path, "*.csv"))
-    logging.info(str(list(all_files)))
+    logging.info('given domains ' + str(list(all_files)))
 
     try:
         domain_df = pd.concat((pd.read_csv(f)
@@ -252,4 +253,4 @@ def load_domain(path):
     domain_df.to_parquet('./saved/domain_data.parquet', engine="pyarrow")
 
     domain_timer_end = timer()
-    logging.info("Time to read domain files took " + str(domain_timer_end - domain_timer) + " seconds")  # nopep8
+    logging.info("time to read domain files took " + str(domain_timer_end - domain_timer) + " seconds")  # nopep8
