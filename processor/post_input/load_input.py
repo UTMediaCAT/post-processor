@@ -144,7 +144,7 @@ def load_twitter(path):
     except:
         logging.info('error with twitter data\n' + format_exc())
         print(format_exc())
-        exit()
+        exit(1)
 
     # Modify the read dataframe
     if len(twitter_df) > 0:
