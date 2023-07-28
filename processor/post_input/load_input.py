@@ -13,9 +13,7 @@ import os
 
 
 def init():
-    """
-    Initialize input script.
-    """
+    """Initialize input script."""
     csv.field_size_limit(sys.maxsize)
     logging.basicConfig(filename='./logs/processor.log', level=logging.DEBUG, filemode='w')  # nopep8
 
@@ -72,6 +70,7 @@ def load_scope(file):
 
 
 def create_empty_twitter_dataframe():
+    '''Return an empty twitter dataframe.'''
     empty_twitter_pd = {
         "id": [],
         "url": [],
@@ -95,45 +94,69 @@ def create_empty_twitter_dataframe():
     return dd.from_pandas(df, npartitions=1)
 
 
+def get_mentions(row):
+    '''Return the mentions of the row and retweet, reply, like, and quote
+    counts using a tuple.'''
+    Mentions = []
+    public_metrics = 0
+    reply_count = 0
+    like_count = 0
+    quote_count = 0
+    if (not pd.isna(row['entities'])):
+        entities = ast.literal_eval(row.entities)
+        if ('mentions' in entities):
+            for mention in entities['mentions']:
+                Mentions.append(mention['username'])
+    if (not pd.isna(row['public_metrics'])):
+        public_metrics = ast.literal_eval(row.public_metrics)
+        retweet_count = public_metrics['retweet_count']
+        reply_count = public_metrics['reply_count']
+        like_count = public_metrics['like_count']
+        quote_count = public_metrics['quote_count']
+    return str(Mentions), retweet_count, reply_count, like_count, quote_count
+
+
+def create_id(row):
+    '''Return a unique id for the row.'''
+    return str(uuid.uuid5(uuid.NAMESPACE_DNS, row.tweet_url))
+
+
+def read_twitter(path):
+    '''Read the csv data at path and return the dataframe.'''
+    return dd.read_csv(path, parse_dates=['created_at'])
+
+
 def load_twitter(path):
     '''Loads the twitter output csv from
     folder ./data_twitter/ into dask DataFrame
     Stores data to /saved/twitter_data.parquet.'''
-
+    # Log the time for loading the twitter data
     twitter_timer = timer()
     logging.info("loading twitter data")
+
+    # Try reading the csv file at path
     try:
-        twitter_df = dd.read_csv(path, parse_dates=['created_at'])
+        twitter_df = read_twitter(path)
+    except FileNotFoundError:
+        logging.info(f'Did not find {path}, creating empty dataframe...')
+        twitter_df = create_empty_twitter_dataframe()
+    except:
+        logging.info(sys.exc_info()[2])
+        print(sys.exc_info()[2])
+        exit()
+
+    # Modify the read dataframe
+    if len(twitter_df) > 0:
         logging.info(len(twitter_df))
 
         # get Mentions
-        def getMentions(row):
-            Mentions = []
-            public_metrics = 0
-            reply_count = 0
-            like_count = 0
-            quote_count = 0
-            if (not pd.isna(row['entities'])):
-                entities = ast.literal_eval(row.entities)
-                if ('mentions' in entities):
-                    for mention in entities['mentions']:
-                        Mentions.append(mention['username'])
-            if (not pd.isna(row['public_metrics'])):
-                public_metrics = ast.literal_eval(row.public_metrics)
-                retweet_count = public_metrics['retweet_count']
-                reply_count = public_metrics['reply_count']
-                like_count = public_metrics['like_count']
-                quote_count = public_metrics['quote_count']
-
-            return str(Mentions), retweet_count, reply_count, like_count, quote_count
-
         twitter_df['retweet_count'] = 0
         twitter_df['reply_count'] = 0
         twitter_df['like_count'] = 0
         twitter_df['quote_count'] = 0
         twitter_df['Mentions'] = '[]'
         res_arr = twitter_df.apply(
-            getMentions, axis=1, meta='object')
+            get_mentions, axis=1, meta='object')
         res_pd = pd.DataFrame(res_arr, columns=[
             'Mentions',
             'retweet_count',
@@ -150,9 +173,7 @@ def load_twitter(path):
         # create new id with uuid
         twitter_df = twitter_df.drop(columns='id')
 
-        def createId(row):
-            return str(uuid.uuid5(uuid.NAMESPACE_DNS, row.tweet_url))
-        twitter_df['id'] = twitter_df.apply(createId, axis=1, meta='object')
+        twitter_df['id'] = twitter_df.apply(create_id, axis=1, meta='object')
 
         # rename, add empty and remove keys
         twitter_df = twitter_df.rename(columns={'citation_urls': 'found_urls', 'twitter_handle': 'domain',
@@ -164,21 +185,18 @@ def load_twitter(path):
         twitter_df['author'] = ''
         twitter_df['completed'] = False
 
-    except:
-        twitter_df = create_empty_twitter_dataframe()
-
     # set url as the index
     twitter_df = twitter_df.set_index('url')
 
-    # store the twitter data in saved
+    # store the twitter data in saved and end logging
     twitter_df.to_parquet(
         './saved/twitter_data.parquet', engine="pyarrow")
-
     twitter_timer_end = timer()
     logging.info("Time to read twitter files took " + str(twitter_timer_end - twitter_timer) + " seconds")  # nopep8
 
 
 def create_empty_domain_dataframe():
+    '''Return an empty dataframe for domain data.'''
     empty_domain_pd = {
         "url": [],
         "title": [],
@@ -209,7 +227,7 @@ def load_domain(path):
     logging.info("loading domain data")
 
     all_files = glob.glob(os.path.join(path, "*.csv"))
-    print(list(all_files))
+    logging.info(str(list(all_files)))
 
     try:
         domain_df = pd.concat((pd.read_csv(f)
