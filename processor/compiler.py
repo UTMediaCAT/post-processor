@@ -32,7 +32,7 @@ def check_dirs():
         elective = map((lambda x : x in OPTIONAL), missing)
         if not all(elective):
             print('[MediaCAT] Directories created; please add data')
-            exit()
+            exit(1)
         print('[MediaCAT] Missing directories created')
 
 
@@ -48,14 +48,19 @@ def check_files():
             missing.append(file)
     if missing:
         print('[MediaCAT] Files not found; please add files')
-        exit()
+        exit(1)
 
 
 def init():
-    """
-    Initialize the compiler script.
-    """
+    """Initialize the compiler script."""
     logging.basicConfig(filename='./logs/processor.log', level=logging.DEBUG, filemode='w')  # nopep8
+
+
+def terminate():
+    """Terminate the completed program."""
+    print('[MediaCAT] Post processing completed successfully')
+    logging.info('successful completion')
+    exit(0)
 
 
 if __name__ == '__main__':
@@ -84,3 +89,6 @@ if __name__ == '__main__':
 
     # create output
     output.create_output()
+
+    # terminate the program
+    terminate()
