@@ -20,16 +20,20 @@ def check_dirs():
     and exit the program.
     """
     REQUIRED = ('data_domain', 'data_twitter', 'output', 'saved', 'logs')
-    MISSING = []
+    OPTIONAL = ('output', 'saved', 'logs')
+    missing = []
     for directory in REQUIRED:
         if not os.path.isdir(f'./{directory}'):
-            MISSING.append(directory)
-    if MISSING:
+            missing.append(directory)
+    if missing:
         print('[MediaCAT] Directories not found; creating directories...')
-        for directory in MISSING:
+        for directory in missing:
             os.mkdir(f'./{directory}')
-        print('[MediaCAT] Directories created; please add data')
-        exit()
+        elective = map((lambda x : x in OPTIONAL), missing)
+        if not all(elective):
+            print('[MediaCAT] Directories created; please add data')
+            exit()
+        print('[MediaCAT] Missing directories created')
 
 
 def check_files():
@@ -38,11 +42,11 @@ def check_files():
     files exist.  If they do not, exit the program.
     """
     REQUIRED = ('crawl_scope.csv', 'citation_scope.csv')
-    MISSING = []
+    missing = []
     for file in REQUIRED:
         if not os.path.isfile(f'./{file}'):
-            MISSING.append(file)
-    if MISSING:
+            missing.append(file)
+    if missing:
         print('[MediaCAT] Files not found; please add files')
         exit()
 
