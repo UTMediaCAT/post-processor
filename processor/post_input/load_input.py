@@ -14,18 +14,19 @@ from traceback import format_exc
 
 
 def init():
-    """Initialize input script."""
+    '''Initialize input script.'''
     csv.field_size_limit(sys.maxsize)
     logging.basicConfig(filename='./logs/processor.log', level=logging.DEBUG, filemode='w')  # nopep8
 
 
 def load_scope(file):
-    """
+    '''
     Loads the scope csv into a dictionary.
     Returns a dict of the scope with Source as key.
-    """
+    '''
     # initialize script
     init()
+    logging.info(f'loading scope {file}')
     # parse all the text aliases from each source using the scope file
     scope = {}
     i = 0
@@ -65,17 +66,18 @@ def load_scope(file):
                                      'aliases': aliases,
                                      'twitter_handles': twitters}
             i = i + 1
-    write_to_file(scope, "./saved/processed_" + file.replace('./',
-                  '').replace('.csv', '') + ".json")
+    write_to_file(scope, './saved/processed_' + file.replace('./',
+                  '').replace('.csv', '') + '.json')
+    logging.info(f'loaded scope {file} with {i} lines')
     return scope
 
 
 def create_empty_twitter_dataframe():
     '''Return an empty twitter dataframe.'''
     empty_twitter_pd = {
-        "id": [],
-        "url": [],
-        "id": [],
+        'id': [],
+        'url': [],
+        'id': [],
         'type': [],
         'tags': [],
         'author': [],
@@ -133,7 +135,7 @@ def load_twitter(path):
     Stores data to /saved/twitter_data.parquet.'''
     # Log the time for loading the twitter data
     twitter_timer = timer()
-    logging.info("loading twitter data")
+    logging.info(f'loading twitter data located at {path}')
 
     # Try reading the csv file at path
     try:
@@ -142,7 +144,7 @@ def load_twitter(path):
         logging.info(f'did not find {path}, creating empty dataframe...')
         twitter_df = create_empty_twitter_dataframe()
     except:
-        logging.info('error with twitter data\n' + format_exc())
+        logging.info('error with twitter data at {path}\n' + format_exc())
         print(format_exc())
         exit(1)
 
@@ -191,43 +193,46 @@ def load_twitter(path):
 
     # store the twitter data in saved and end logging
     twitter_df.to_parquet(
-        './saved/twitter_data.parquet', engine="pyarrow")
+        './saved/twitter_data.parquet', engine='pyarrow')
     twitter_timer_end = timer()
-    logging.info("time to read twitter files took " + str(twitter_timer_end - twitter_timer) + " seconds")  # nopep8
+    logging.info('time to read twitter files took ' + 
+            str(twitter_timer_end - twitter_timer) + ' seconds')
 
 
 def create_empty_domain_dataframe():
     '''Return an empty dataframe for domain data.'''
     empty_domain_pd = {
-        "url": [],
-        "title": [],
-        "author": [],
-        "date": [],
-        "html_content": [],
-        "article_text": [],
-        "domain": [],
+        'url': [],
+        'title': [],
+        'author': [],
+        'date': [],
+        'html_content': [],
+        'article_text': [],
+        'domain': [],
         'retweet_count': [],
         'reply_count': [],
         'like_count': [],
         'quote_count': [],
-        "id": [],
-        "found_urls": [],
-        "completed": [],
-        "type": [],
+        'id': [],
+        'found_urls': [],
+        'completed': [],
+        'type': [],
     }
     df = pd.DataFrame.from_dict(empty_domain_pd)
     return df
 
 
 def load_domain(path):
-    """Loads the domain output csv from
+    '''
+    Loads the domain output csv from
     folder ./data_domain/ into a dictionary.
-    Stores data to saved/domain_data.parquet."""
+    Stores data to saved/domain_data.parquet.
+    '''
 
     domain_timer = timer()
-    logging.info("loading domain data")
+    logging.info(f'loading domain data located at {path}')
 
-    all_files = glob.glob(os.path.join(path, "*.csv"))
+    all_files = glob.glob(os.path.join(path, '*.csv'))
     logging.info('given domains ' + str(list(all_files)))
 
     try:
@@ -250,7 +255,9 @@ def load_domain(path):
                            'reply_count', 'like_count', 'quote_count']]
     domain_df = domain_df.drop_duplicates(subset=['url'])
     domain_df = domain_df.set_index('url')
-    domain_df.to_parquet('./saved/domain_data.parquet', engine="pyarrow")
+    domain_df.to_parquet('./saved/domain_data.parquet', engine='pyarrow')
 
     domain_timer_end = timer()
-    logging.info("time to read domain files took " + str(domain_timer_end - domain_timer) + " seconds")  # nopep8
+    logging.info('time to read domain files took ' +
+            str(domain_timer_end - domain_timer) + ' seconds')
+
