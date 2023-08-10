@@ -1,6 +1,7 @@
 import sys
 import os
 
+
 def eprint(*args):
     '''Print contents to standard error stream.'''
     print(*args, file=sys.stderr)
