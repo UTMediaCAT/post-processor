@@ -1,4 +1,4 @@
-# Metscraper
+# Metascraper
 This tool can be used to populate the `title_metascraper, author_metascraper, date, html_content, article_text` fields of JSONs produced by the domain crawler.
 
 ## Usage
