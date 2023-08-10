@@ -13,6 +13,7 @@ def write_to_file(dictionary, filename):
     '''Writes the dictionary to a json file with the given filename.'''
     # Serializing json
     json_object = json.dumps(dictionary, indent=4)
+
     # Writing to output.json
     with open(filename, 'w') as outfile:
         outfile.write(json_object)
