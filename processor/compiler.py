@@ -3,22 +3,23 @@ import os
 import post_input.load_input as load_input
 import post_processor.processor as processor
 import post_output.create_output as output
+from post_utils.utils import eprint
 
 
 def parse_args():
-    """
+    '''
     Parse the script arguments.
     Currently there are no script arguments.
-    """
+    '''
     pass
 
 
 def check_dirs():
-    """
+    '''
     Check the directory structure to see if the required
     directories exist.  If they do not, create the directories
     and exit the program.
-    """
+    '''
     REQUIRED = ('data_domain', 'data_twitter', 'output', 'saved', 'logs')
     OPTIONAL = ('output', 'saved', 'logs')
     missing = []
@@ -26,39 +27,39 @@ def check_dirs():
         if not os.path.isdir(f'./{directory}'):
             missing.append(directory)
     if missing:
-        print('[MediaCAT] Directories not found; creating directories...')
+        eprint('[MediaCAT] Directories not found; creating directories...')
         for directory in missing:
             os.mkdir(f'./{directory}')
         elective = map((lambda x : x in OPTIONAL), missing)
         if not all(elective):
-            print('[MediaCAT] Directories created; please add data')
+            eprint('[MediaCAT] Directories created; please add data')
             exit(1)
-        print('[MediaCAT] Missing directories created')
+        eprint('[MediaCAT] Missing directories created')
 
 
 def check_files():
-    """
+    '''
     Check the directory structure to see if the required
     files exist.  If they do not, exit the program.
-    """
+    '''
     REQUIRED = ('crawl_scope.csv', 'citation_scope.csv')
     missing = []
     for file in REQUIRED:
         if not os.path.isfile(f'./{file}'):
             missing.append(file)
     if missing:
-        print('[MediaCAT] Files not found; please add files')
+        eprint('[MediaCAT] Files not found; please add files')
         exit(1)
 
 
 def init():
-    """Initialize the compiler script."""
+    '''Initialize the compiler script.'''
     logging.basicConfig(filename='./logs/processor.log', level=logging.DEBUG, filemode='w')  # nopep8
 
 
 def terminate():
-    """Terminate the completed program."""
-    print('[MediaCAT] Post processing completed successfully')
+    '''Terminate the completed program.'''
+    eprint('[MediaCAT] Post processing completed successfully')
     logging.info('successful completion')
     exit(0)
 
