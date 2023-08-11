@@ -16,7 +16,7 @@ def init():
     '''Initialize input script.'''
     csv.field_size_limit(sys.maxsize)
     logging.basicConfig(filename='./logs/processor.log', level=logging.DEBUG,
-            filemode='w')  # nopep8
+            filemode='w') 
 
 
 def load_scope(file):
