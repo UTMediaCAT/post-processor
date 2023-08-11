@@ -12,7 +12,7 @@ from timeit import default_timer as timer
 def init():
     '''Initialize domain script.'''
     logging.basicConfig(filename='./logs/processor.log',
-                        level=logging.DEBUG, filemode='w')  # nopep8
+                        level=logging.DEBUG, filemode='w') 
 
 
 def find_domain_citation_aliases(article, scope):

@@ -1,18 +1,16 @@
-from timeit import default_timer as timer
-import dask.dataframe as dd
-import pandas as pd
 import logging
 import re
 import ast
 import sys
 import tldextract
+import dask.dataframe as dd
+import pandas as pd
 from post_utils.utils import row_parser
+from timeit import default_timer as timer
 
 
 def init():
-    """
-    Initialize twitter script.
-    """
+    '''Initialize twitter script.'''
     logging.basicConfig(filename='./logs/processor.log',
                         level=logging.DEBUG, filemode='w')
 
