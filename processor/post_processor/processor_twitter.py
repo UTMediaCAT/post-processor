@@ -16,20 +16,20 @@ def init():
 
 
 def find_twitter_citation_aliases(tweet, scope):
+    '''Find and return the twitter citation aliases based on 
+    a given tweet that satisfies the scope.'''
     found_aliases = []
     citation_url_or_text_alias = []
     citation_name = []
-
     node_twitter_handle = tweet['domain']
+
     try:
         for source, info in scope.items():
-
-            # skip recursive citation
-
             needskip = False
             for i in range(0, len(info['twitter_handles'])):
                 if (info['twitter_handles'][i].replace('@', '').strip().lower() == node_twitter_handle.replace('@', '').strip().lower()):
                     needskip = True
+
             if needskip:
                 continue
 
@@ -84,29 +84,33 @@ def find_twitter_citation_aliases(tweet, scope):
 
 
 def get_twitter_handle_info(tweet, crawl_scope):
-    publisher = ""
-    tags = ""
-    name = ""
+    '''Return the twitter handle information based
+    on the tweet and crawl_scope.'''
+    publisher = ''
+    tags = ''
+    name = ''
     for source, info in crawl_scope.items():
         for i in range(0, len(info['twitter_handles'])):
-            if (info['twitter_handles'][i].replace('@', '').lower().strip() == tweet["domain"].replace('@', '').lower().strip()):
+            indicator = tweet['domain'].replace('@', '').lower().strip() if type(tweet['domain']) is str else tweet['domain'].values[0].replace('@', '').lower().strip()
+            if (info['twitter_handles'][i].replace('@', '').lower().strip() == indicator):
                 try:
                     publisher = crawl_scope[source]['Publisher']
                 except Exception:
-                    publisher = ""
+                    publisher = ''
                 try:
                     tags = crawl_scope[source]['Tags']
                 except Exception:
-                    tags = ""
+                    tags = ''
                 try:
                     name = crawl_scope[source]['Name']
                 except Exception:
-                    name = ""
-
+                    name = ''
     return publisher, tags, name
 
 
 def tweet_helper(tweet, crawl_scope, citation_scope):
+    '''Helper script for twitter processor based on tweet,
+    crawl_scope, and citation_scope.'''
     tweet = row_parser(tweet)
     citation_url_or_text_alias, citation_name, anchor_text, found_aliases = find_twitter_citation_aliases(
         tweet, citation_scope)
@@ -124,7 +128,7 @@ def tweet_helper(tweet, crawl_scope, citation_scope):
 
 
 def process_twitter(crawl_scope, citation_scope):
-    """
+    '''
     Processes the twitter data by finding all the articles
     that are referring to it and mutating the output dictionary.
     Parameters:
@@ -132,12 +136,12 @@ def process_twitter(crawl_scope, citation_scope):
         scope: the scope dictionary
     Returns 2 dicts, one for the mutated data dictionary,
     and another dict of referrals.
-    """
+    '''
     # initialize script
     init()
     # process twitter
     try:
-        logging.info("Processing Twitter")
+        logging.info('processing twitter')
         start = timer()
         # load domain_data from saved
         data_partitions = dd.read_parquet('./saved/twitter_data.parquet')
@@ -151,17 +155,12 @@ def process_twitter(crawl_scope, citation_scope):
             return {}, data_partitions
 
         referrals = {}
-        processed_data_pd = pd.DataFrame()
 
         data = data_partitions.repartition(
-            partition_size="100MB")  # data is a dask dataframe
+            partition_size='100MB')  # data is a dask dataframe
         logging.info('process twitter data with {} rows and {} partitions'.format(
             len(data_partitions), data_partitions.npartitions))
 
-        # res_arr = data.apply(tweet_helper, axis=1, args=(
-        #     crawl_scope, citation_scope,), meta='object')
-
-        ###
         data_pd = data.compute()  # data_pd is a panda dataframe
         res_list = []
         for index in data_pd.index:
@@ -177,23 +176,9 @@ def process_twitter(crawl_scope, citation_scope):
         data_pd['associated publisher'] = list(res_list[4])
         data_pd['tags'] = list(res_list[5])
         data_pd['name'] = list(res_list[6])
-        ###
-
-        # update 'citation url or text alias', 'citation name', 'anchor text' using pd.update
-        # update publisher, tags, name
-        # res_pd = pd.DataFrame(res_arr, columns=[
-        #     'citation url or text alias',
-        #     'citation name',
-        #     'anchor text',
-        #     'found_aliases',
-        #     'associated publisher',
-        #     'tags',
-        #     'name'], index=res_arr.index)
-
-        # data_pd.update(res_pd)
 
         # get referrals update
-        logging.info("getting referrals update")
+        logging.info('getting referrals update')
         found_aliases_arr = list(res_list[3])
 
         i = 0
@@ -216,22 +201,25 @@ def process_twitter(crawl_scope, citation_scope):
                         referrals[source] = [data_pd.loc[node]['domain']]
                 i += 1
             except Exception:
-                logging.info(data_pd.loc[node])
+                logging.warning(data_pd.loc[node])
 
         # update completed to True
         data_pd.completed = True
-        # append to processed_data_pd
-        processed_data_pd = processed_data_pd.append(data_pd)
+        # append to processed_data_pd using concat
+        data_list = data_pd.to_dict('records')
+        processed_data_pd = pd.DataFrame.from_records(data_list)
 
         processed_data = dd.from_pandas(processed_data_pd, npartitions=1).repartition(
-            partition_size="100MB")
+            partition_size='100MB')
 
-        end = timer()
-        logging.info("Finished Processing Twitter - Took " + str(end - start) + " seconds")  # nopep8
+        end = timer() 
+        logging.info(f'finished processing twitter with {i} records')
+        logging.info('processing twitter took ' + str(end - start) + ' seconds')
         return referrals, processed_data
     except Exception:
-        logging.warning('Exception at Processing Twitter, data written to saved/')  # nopep8
+        logging.warning('exception at processing twitter, data written to saved/')
         exc_type, exc_value, exc_traceback = sys.exc_info()
         logging.error(exc_value)
         logging.error(exc_type)
         raise
+
