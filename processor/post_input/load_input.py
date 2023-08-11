@@ -106,7 +106,7 @@ def create_empty_twitter_dataframe():
 def get_mentions(row):
     '''Return the mentions of the row and retweet, reply, like, and quote
     counts using a tuple.'''
-    Mentions = []
+    mentions = []
     public_metrics = 0
     reply_count = 0
     like_count = 0
@@ -115,14 +115,14 @@ def get_mentions(row):
         entities = ast.literal_eval(row.entities)
         if ('mentions' in entities):
             for mention in entities['mentions']:
-                Mentions.append(mention['username'])
+                mentions.append(mention['username'])
     if (not pd.isna(row['public_metrics'])):
         public_metrics = ast.literal_eval(row.public_metrics)
         retweet_count = public_metrics['retweet_count']
         reply_count = public_metrics['reply_count']
         like_count = public_metrics['like_count']
         quote_count = public_metrics['quote_count']
-    return str(Mentions), retweet_count, reply_count, like_count, quote_count
+    return str(mentions), retweet_count, reply_count, like_count, quote_count
 
 
 def create_id(row):
@@ -156,7 +156,7 @@ def load_twitter(path):
 
     # Modify the read dataframe
     if len(twitter_df) > 0:
-        logging.info(len(twitter_df))
+        logging.info(f'modifying {path} with {len(twitter_df)} records')
 
         # get Mentions
         twitter_df['retweet_count'] = 0
@@ -165,7 +165,12 @@ def load_twitter(path):
         twitter_df['quote_count'] = 0
         twitter_df['Mentions'] = '[]'
         res_arr = twitter_df.apply(
-            get_mentions, axis=1, meta='object')
+            getMentions, axis=1, result_type='expand', meta={0: str, 
+            1: str, 
+            2: str, 
+            3: str, 
+            4: str})
+        res_arr.columns = ['Mentions', 'retweet_count', 'reply_count', 'like_count', 'quote_count']
         res_pd = pd.DataFrame(res_arr, columns=[
             'Mentions',
             'retweet_count',
@@ -182,7 +187,7 @@ def load_twitter(path):
         # create new id with uuid
         twitter_df = twitter_df.drop(columns='id')
 
-        twitter_df['id'] = twitter_df.apply(create_id, axis=1, meta='object')
+        twitter_df['id'] = twitter_df.apply(create_id, axis=1, meta=('id', 'str'))
 
         # rename, add empty and remove keys
         twitter_df = twitter_df.rename(columns={'citation_urls': 'found_urls', 'twitter_handle': 'domain',
@@ -193,6 +198,8 @@ def load_twitter(path):
         twitter_df['title'] = ''
         twitter_df['author'] = ''
         twitter_df['completed'] = False
+    else:
+        twitter_df = create_empty_twitter_dataframe()
 
     # set url as the index
     twitter_df = twitter_df.set_index('url')
