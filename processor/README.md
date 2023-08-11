@@ -4,7 +4,6 @@ cd Post-Processor
 pip3 install -r requirements.txt
 python3 compilier.py
 ```
-**NOTE: more detailed instructions and testing can be find in `compiler.ipynb`**
 
 ### Required files and folder structure within Post-Processor directory:
 - crawl\_scope.csv: scope file that contains all the crawl domains
