@@ -147,11 +147,11 @@ def load_twitter(path):
     try:
         twitter_df = read_twitter(path)
     except FileNotFoundError:
-        logging.info(f'did not find {path}, creating empty dataframe...')
+        logging.warning(f'did not find {path}, creating empty dataframe...')
         twitter_df = create_empty_twitter_dataframe()
     except:
-        logging.info('error with twitter data at {path}\n' + format_exc())
-        print(format_exc())
+        logging.error('error with twitter data at {path}\n' + format_exc())
+        print(format_exc(), file=sys.stderr)
         exit(1)
 
     # Modify the read dataframe
