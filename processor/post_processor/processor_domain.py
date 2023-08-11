@@ -1,20 +1,18 @@
-from timeit import default_timer as timer
-import dask.dataframe as dd
-import pandas as pd
 import logging
 import re
 import ast
 import sys
 import tldextract
+import dask.dataframe as dd
+import pandas as pd
 from post_utils.utils import row_parser
+from timeit import default_timer as timer
 
 
 def init():
-    """
-    Initialize domain script.
-    """
+    '''Initialize domain script.'''
     logging.basicConfig(filename='./logs/processor.log',
-                        level=logging.DEBUG, filemode='w')
+                        level=logging.DEBUG, filemode='w') 
 
 
 def find_domain_citation_aliases(article, scope):
@@ -30,7 +28,6 @@ def find_domain_citation_aliases(article, scope):
             the sources that this article node refers to
     '''
     found_aliases = []
-
     citation_url_or_text_alias = []
     citation_name = []
     anchor_text = []
@@ -91,27 +88,29 @@ def find_domain_citation_aliases(article, scope):
 
         return str(citation_url_or_text_alias), str(citation_name),  str(anchor_text), str(found_aliases)
     except Exception:
-        return str(citation_url_or_text_alias), str(citation_name),  str(anchor_text), str(found_aliases)
+        return str(citation_url_or_text_alias), str(cit
 
 
 def get_domain_info(article, crawl_scope):
+    '''Return the domain information from the article based on the crawl_scope.'''
     try:
-        publisher = crawl_scope[article["domain"]]['Publisher']
+        publisher = crawl_scope[article['domain']]['Publisher']
     except Exception:
-        publisher = ""
+        publisher = ''
     try:
-        tags = crawl_scope[article["domain"]]['Tags']
+        tags = crawl_scope[article['domain']]['Tags']
     except Exception:
-        tags = ""
+        tags = ''
     try:
-        name = crawl_scope[article["domain"]]['Name']
+        name = crawl_scope[article['domain']]['Name']
     except Exception:
-        name = ""
-
+        name = ''
     return publisher, tags, name
 
 
 def domain_helper(article, crawl_scope, citation_scope):
+    '''Helper script for domain processing using article,
+    crawl_scope, and citation_scope.'''
     article = row_parser(article)
     citation_url_or_text_alias, citation_name, anchor_text, found_aliases = find_domain_citation_aliases(
         article, citation_scope)
@@ -129,7 +128,7 @@ def domain_helper(article, crawl_scope, citation_scope):
 
 
 def process_domain(crawl_scope, citation_scope):
-    """
+    '''
     Processes the domain data by finding all the articles that it is
     referring to and articles that are referring to it and mutating
     the output dictionary.
@@ -139,11 +138,11 @@ def process_domain(crawl_scope, citation_scope):
     Return:
         Returns 2 dicts, one for the mutated data dictionary,
         and another dict of referrals.
-    """
+    '''
     # initialize script
     init()
     # process the domain
-    logging.info("Processing Domain")
+    logging.info('processing domain')
     try:
         start = timer()
         # load domain_data from saved
@@ -160,14 +159,11 @@ def process_domain(crawl_scope, citation_scope):
         referrals = {}
         processed_data_pd = pd.DataFrame()
         data = data_partitions.repartition(
-            partition_size="100MB")  # data is a dask dataframe
-        # data = data_partitions.repartition(
-        #     npartitions=1000).partitions[0]  # data is a dask dataframe
+            partition_size='100MB')  # data is a dask dataframe
         logging.info('process domain data with {} rows and {} partitions'.format(
             len(data), data.npartitions))
         data_pd = data.compute()  # data_pd is a panda dataframe
 
-        ###
         res_list = []
         for index in data_pd.index:
             res_arr = domain_helper(
@@ -182,26 +178,9 @@ def process_domain(crawl_scope, citation_scope):
         data_pd['associated publisher'] = list(res_list[4])
         data_pd['tags'] = list(res_list[5])
         data_pd['name'] = list(res_list[6])
-        ###
-
-        # res_arr = data.apply(domain_helper, axis=1, args=(
-        #     crawl_scope, citation_scope,), meta='object')
-
-        # # update 'citation url or text alias', 'citation name', 'anchor text' using pd.update
-        # # update publisher, tags, name
-        # res_pd = pd.DataFrame(res_arr, columns=[
-        #     'citation url or text alias',
-        #     'citation name',
-        #     'anchor text',
-        #     'found_aliases',
-        #     'associated publisher',
-        #     'tags',
-        #     'name'], index=res_arr.index)
-
-        # data_pd.update(res_pd)
 
         # get referrals update
-        logging.info("getting referrals update")
+        logging.info('getting referrals update')
         found_aliases_arr = list(res_list[3])
         i = 0
         for node in data_pd.index:
@@ -224,7 +203,7 @@ def process_domain(crawl_scope, citation_scope):
                         referrals[source] = [data_pd.loc[node]['domain']]
                 i += 1
             except Exception:
-                logging.info(data_pd.loc[node])
+                logging.warning(data_pd.loc[node])
 
         # update completed to True
         data_pd.completed = True
@@ -234,11 +213,14 @@ def process_domain(crawl_scope, citation_scope):
         processed_data = dd.from_pandas(processed_data_pd, npartitions=1)
 
         end = timer()
-        logging.info("Finished Processing Domain - Took " + str(end - start) + " seconds")  # nopep8
+        logging.info(f'finished processing domain with {i} records')
+        logging.info('processing domain took ' 
+                + str(end - start) + ' seconds') 
         return referrals, processed_data
     except Exception:
-        logging.warning('Exception at Processing Domain, data written to saved/')  # nopep8
+        logging.warning('exception at processing domain, data written to saved/')  # nopep8
         exc_type, exc_value, exc_traceback = sys.exc_info()
         logging.error(exc_value)
         logging.error(exc_type)
         raise
+
