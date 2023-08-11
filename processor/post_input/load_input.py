@@ -1,22 +1,22 @@
 import uuid
 import logging
 import csv
-import dask.dataframe as dd
-from numpy import partition
-import pandas as pd
 import ast
-from timeit import default_timer as timer
-from post_utils.utils import write_to_file
 import sys
 import glob
 import os
+import dask.dataframe as dd
+import pandas as pd
+from post_utils.utils import write_to_file
 from traceback import format_exc
+from timeit import default_timer as timer
 
 
 def init():
     '''Initialize input script.'''
     csv.field_size_limit(sys.maxsize)
-    logging.basicConfig(filename='./logs/processor.log', level=logging.DEBUG, filemode='w')  # nopep8
+    logging.basicConfig(filename='./logs/processor.log', level=logging.DEBUG,
+            filemode='w')  # nopep8
 
 
 def load_scope(file):
@@ -30,46 +30,52 @@ def load_scope(file):
     # parse all the text aliases from each source using the scope file
     scope = {}
     i = 0
-    # format: {source: {aliases: [], twitter_handles:[]}}
     with open(file) as csv_file:
         for line in csv.DictReader(csv_file):
-            aliases, twitters, tags = [], [], []
-            if 'Text Aliases' in line.keys() and line['Text Aliases']:
-                aliases = line['Text Aliases'].split('|')
-            else:
-                aliases = []
-            if 'Twitter Handle' in line.keys() and line['Twitter Handle']:  # nopep8
-                twitters = line['Twitter Handle'].split('|')
-                for i in range(0, len(twitters)):
-                    twitters[i] = twitters[i].strip()
-            else:
-                twitters = []
-            if 'Tags' in line.keys() and line['Tags']:
-                tags = line['Tags']
-            else:
-                tags = ''
-            try:
-                publisher = line['Associated Publisher']
-            except(Exception):
-                publisher = ''
-            try:
-                source = line['Source']
-                if source in scope.keys() or source == '':
-                    raise 'error'
-            except(Exception):
-                source = str(uuid.uuid4())
-            scope[source] = {'Name': line['Name'] if 'Name' in line.keys() else '',
-                                    #  'RSS': line['RSS feed URLs (where available)'],  # nopep8
-                                     'Type': line['Type'] if 'type' in line.keys() else '',
-                                     'Publisher': publisher,
-                                     'Tags': tags,
-                                     'aliases': aliases,
-                                     'twitter_handles': twitters}
+            name = line['Name'] if 'Name' in line.keys() else ''
+            scope_type = line['Type'] if 'type' in line.keys() else ''
+            alias, twitter, tag, pub, source = process_scope(scope, line)
+            scope[source] = {'Name': name,
+                             'Type': scope_type,
+                             'Publisher': pub,
+                             'Tags': tag,
+                             'aliases': alias,
+                             'twitter_handles': twitter}
             i = i + 1
     write_to_file(scope, './saved/processed_' + file.replace('./',
                   '').replace('.csv', '') + '.json')
     logging.info(f'loaded scope {file} with {i} lines')
     return scope
+
+
+def process_scope(scope, line):
+    '''Return the processed and important columns of the line in the scope.'''
+    aliases, twitters, tags = [], [], []
+    if 'Text Aliases' in line.keys() and line['Text Aliases']:
+        aliases = line['Text Aliases'].split('|')
+    else:
+        aliases = []
+    if 'Twitter Handle' in line.keys() and line['Twitter Handle']: 
+        twitters = line['Twitter Handle'].split('|')
+        for i in range(0, len(twitters)):
+            twitters[i] = twitters[i].strip()
+    else:
+        twitters = []
+    if 'Tags' in line.keys() and line['Tags']:
+        tags = line['Tags']
+    else:
+        tags = ''
+    try:
+        publisher = line['Associated Publisher']
+    except(Exception):
+        publisher = ''
+    try:
+        source = line['Source']
+        if source in scope.keys() or source == '':
+            raise 'error'
+    except(Exception):
+        source = str(uuid.uuid4())
+    return aliases, twitters, tags, publisher, source
 
 
 def create_empty_twitter_dataframe():
