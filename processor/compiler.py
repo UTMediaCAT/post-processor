@@ -59,7 +59,7 @@ def init():
 
 def terminate():
     '''Terminate the completed program.'''
-    eprint('[MediaCAT] Post processing completed successfully')
+    print('[MediaCAT] Post processing completed successfully')
     logging.info('successful completion')
     exit(0)
 
