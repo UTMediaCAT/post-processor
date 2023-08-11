@@ -213,7 +213,7 @@ def process_domain(crawl_scope, citation_scope):
         processed_data = dd.from_pandas(processed_data_pd, npartitions=1)
 
         end = timer()
-        logging.info(f'finished processing domain with {i} records}')
+        logging.info(f'finished processing domain with {i} records')
         logging.info('processing domain took ' 
                 + str(end - start) + ' seconds') 
         return referrals, processed_data
