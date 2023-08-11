@@ -1,14 +1,12 @@
+import logging
 from timeit import default_timer as timer
 import dask.dataframe as dd
 import pandas as pd
-import logging
 
 
 def init():
-    """
-    Initialize output script.
-    """
-    logging.basicConfig(filename='./logs/processor.log', level=logging.DEBUG, filemode='w')  # nopep8
+    '''Initialize output script.'''
+    logging.basicConfig(filename='./logs/processor.log', level=logging.DEBUG, filemode='w') 
 
 
 def create_output():
@@ -16,14 +14,12 @@ def create_output():
     init()
 
     # start logging for output
-    logging.info("creating output")
+    logging.info('creating output')
     start = timer()
 
     # read data from saved
-    domain_data = dd.read_parquet('./saved/processed_domain_data.parquet').repartition(
-        partition_size="100MB")
-    twitter_data = dd.read_parquet('./saved/processed_twitter_data.parquet').repartition(
-        partition_size="100MB")
+    domain_data = dd.read_parquet('./saved/processed_domain_data.parquet')
+    twitter_data = dd.read_parquet('./saved/processed_twitter_data.parquet')
 
     # remove unwanted keys for domain_data
     domain_data = domain_data.drop(
@@ -55,3 +51,4 @@ def create_output():
 
 if __name__ == '__main__':
     create_output()
+
