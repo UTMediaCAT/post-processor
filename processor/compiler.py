@@ -54,7 +54,7 @@ def check_files():
 
 def init():
     '''Initialize the compiler script.'''
-    logging.basicConfig(filename='./logs/processor.log', level=logging.DEBUG, filemode='w')  # nopep8
+    logging.basicConfig(filename='./logs/processor.log', level=logging.DEBUG, filemode='w') 
 
 
 def terminate():
