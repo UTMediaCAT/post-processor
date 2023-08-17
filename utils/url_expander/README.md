@@ -15,3 +15,10 @@ The [URL-expander python module](https://pypi.org/project/urlexpander/) used by 
 
 ### Skipping non-shortened URLs
 To improve efficiency, the URL-expander module can be programmed to skip over links that are already expanded (see [here](https://nbviewer.org/github/SMAPPNYU/urlExpander/blob/master/examples/quickstart.ipynb?flush_cache=true) for more), however it does not recognize all shortened patterns and may sometimes incorrectly skip over some links. The list of known shortened patterns can be further expanded with user defined input (again, see [here](https://nbviewer.org/github/SMAPPNYU/urlExpander/blob/master/examples/quickstart.ipynb?flush_cache=true) for more).
+
+## Requirements
+You will need:
+- python3
+- node.js
+- urlexpander
+

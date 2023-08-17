@@ -1,7 +1,7 @@
 """
 This script expands all shortened URLs in tweet CSVs
 Usage:
-    python3 expandUrls.py sourceDirectory destinationDirectory
+    python3 expand.py source_directory destination_directory
 """
 import csv
 import urlexpander
@@ -15,7 +15,7 @@ import subprocess
 from socket import timeout
 from multiprocessing import Process, Manager
 
-logging.basicConfig(filename='./logs/error.log', level=logging.INFO, filemode='w')  # nopep8
+logging.basicConfig(filename='./logs/error.log', level=logging.INFO, filemode='w')
 
 
 def expand_urls(filename):
@@ -84,7 +84,7 @@ def expand_urls(filename):
 
                             except Exception:
                                 # if unable to expand URL, use the original URL
-                                logging.info('failed at ' + str(url))
+                                logging.warning('failed at ' + str(url))
                                 expanded = url
                             expanded_urls.append(expanded)
                         d['citation_urls'] = str(expanded_urls)
