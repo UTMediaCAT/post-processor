@@ -120,4 +120,6 @@ if __name__ == '__main__':
     for proc in range(num_procs):
         procs[proc] = Process(target=initialize, args=(assignments[proc], ))
         procs[proc].start()
+    for proc in range(num_procs):
+        procs[proc].join()
 
