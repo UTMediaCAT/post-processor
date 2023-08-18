@@ -7,7 +7,7 @@ After cloning this repository,
 2. `python3 source dest [num_procs]`, where:
     - `source` is the full path to the directory of twitter CSVs
     - `dest` is the full path to the directory where the new CSVs (with the expanded URLs where possible) will be stored. They will be stored under their original name
-    - `num_procs` is an optional argument denoting an integer representing the number of processes to be used for multi-processing. For optimum performance, and if available resources allow it, this will ideally be equal to the number of files in `source`.  If not specified, `num_procs` will be set to 1 denoting no multi-processing.
+    - `num_procs` is an optional argument denoting an integer representing the number of processes to be used for multi-processing. For optimum performance, and if available resources allow it, this will ideally be equal to the number of files in `source`.  If not specified, this argument will be set to 1 denoting no multi-processing.
 
 ## Known Issues
 ### Connection & Client Errors
