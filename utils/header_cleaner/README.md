@@ -11,7 +11,7 @@ Call `python clean.py <old file> <new file>`, where
 ## Instructions for `multiclean.py`
 
 Call `python multiclean.py <source dir> <target dir> [num_proc]`, where
-- \<source dir\> is the source directory containing files to be cleaned,
-- \<target dir\> is the target directory to hold clean *.csv* files, and
+- \<source dir\> is the path of the source directory containing files to be cleaned,
+- \<target dir\> is the path of the target directory to hold clean *.csv* files, and
 - \[num\_proc\] is an optional argument denoting the number of processes to use for cleaning.  If not specified, the default will be 1 process, which means no multiprocessing.
 
