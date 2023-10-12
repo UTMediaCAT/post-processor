@@ -132,7 +132,9 @@ def create_id(row):
 
 def read_twitter(path):
     '''Read the csv data at path and return the dataframe.'''
-    return dd.read_csv(path, parse_dates=['created_at'])
+    df = dd.read_csv(path)
+    dd.to_datetime(df['created_at'])
+    return df
 
 
 def load_twitter(path):
