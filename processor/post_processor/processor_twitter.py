@@ -163,9 +163,10 @@ def process_twitter(crawl_scope, citation_scope):
 
         data_pd = data.compute()  # data_pd is a panda dataframe
         res_list = []
-        for index in data_pd.index:
+        for index, row in data_pd.iterrows():
             res_arr = tweet_helper(
-                data_pd.loc[index], crawl_scope, citation_scope)
+                row, crawl_scope, citation_scope
+            )
             res_list.append(res_arr)
 
         res_list = list(zip(*res_list))
