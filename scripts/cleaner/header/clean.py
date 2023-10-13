@@ -1,5 +1,5 @@
-import sys
 import os
+import sys
 
 def eprint(*args):
     '''Print contents (*args) to standard error stream.'''
@@ -56,4 +56,3 @@ if __name__ == '__main__':
     file, target = sys.argv[1], sys.argv[2]
     verify(file)
     clean(file, set_ext(target))
-
