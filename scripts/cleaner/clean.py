@@ -4,15 +4,17 @@ from os import mkdir
 from os.path import abspath
 from os.path import exists
 from os.path import join
-from shutil import rmtree
 from shutil import copytree
+from shutil import move
+from shutil import rmtree
 from subprocess import run
 from subprocess import CalledProcessError
 
 TAG = '[MediaCAT]'
-USAGE = 'python clean.py dir [num_proc]'
+USAGE = 'python3 clean.py dir [num_proc]'
 NUM_PROC = 4
 PATH = abspath(getcwd())
+INVALID = {'header', 'record', 'old', 'temp'}
 
 def perror(*args):
     '''Print args to std err stream.'''
@@ -24,6 +26,9 @@ def verify_directory(directory):
     Return the name of the directory if valid, otherwise
     exit the program.
     '''
+    if directory in INVALID:
+        perror(TAG, f'{directory} cannot be used')
+        exit(1)
     if exists(directory):
         return directory
     perror(TAG, f'{directory} not a valid directory')
@@ -38,9 +43,18 @@ def create_src(directory):
     path = join(PATH, old)
     if exists(path):
         rmtree(path)
-    else:
-        mkdir(path)
     copytree(directory, path)
+    return path
+
+def run_operations(src, directory, n_proc):
+    '''Run all the cleaning operations.'''
+    temp = join(PATH, 'temp')
+    if exists(temp):
+        rmtree(temp)
+    copytree(src, temp)
+    run_header(src, temp, n_proc)
+    run_record(temp, directory, n_proc)
+    rmtree(temp)
 
 def run_header(src, directory, n_proc):
     '''Run the header multiclean.py script.'''
@@ -66,13 +80,31 @@ def run_record(src, directory, n_proc):
         perror(TAG, 'failed to run record script')
         exit(1)
 
+def move_old(directory):
+    '''Move the old directory files to the old directory.'''
+    old = join(PATH, 'old')
+    old_dir = join(PATH, f'old_{directory}')
+    if not exists(old):
+        mkdir(old)
+    move(old_dir, old)
+    i = 0
+    moved = False
+    while not moved:
+        new_dir = join(old, f'{directory}_{i}')
+        if not exists(new_dir):
+            move(join(old, f'old_{directory}'), new_dir)
+            moved = True
+        i += 1
+
 if __name__ == '__main__':
     if not (2 <= len(sys.argv) <= 3):
         perror(TAG, 'expected usage:', USAGE)
         exit(1)
     directory = verify_directory(sys.argv[1])
-    processes = sys.argv[2] if len(sys.argv) == 3 else NUM_PROC
+    processes = sys.argv[2] if len(sys.argv) == 3 else str(NUM_PROC)
+    if not processes.is_digit():
+        perror(TAG, 'optional arg num_proc NaN')
     src = create_src(directory)
-    run_header(src, directory, processes)
-    run_record(src, directory, processes)
+    run_operations(src, directory, processes)
+    move_old(directory)
 
