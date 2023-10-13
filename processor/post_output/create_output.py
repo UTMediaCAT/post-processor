@@ -40,6 +40,7 @@ def create_output():
         output = domain_data
     else:
         output = domain_data.append(twitter_data)
+
     output = output[(output['citation url or text alias'].str.len() > 2) & ((
         output['associated publisher'].str.len() > 0) | (
         output['name'].str.len() > 0) | (
