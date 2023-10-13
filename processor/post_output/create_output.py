@@ -45,6 +45,7 @@ def create_output():
         output['name'].str.len() > 0) | (
         output['tags'].str.len() > 0))]
     output = output.repartition(1)
+    output['date of publication'] = dd.to_datetime(output['date of publication'])
     output.to_parquet('./saved/final_output.parquet')
     output.to_csv('./output/output_*.csv')
 
