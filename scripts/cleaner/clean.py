@@ -102,9 +102,9 @@ if __name__ == '__main__':
         exit(1)
     directory = verify_directory(sys.argv[1])
     processes = sys.argv[2] if len(sys.argv) == 3 else str(NUM_PROC)
-    if not processes.is_digit():
+    if not processes.isdigit():
         perror(TAG, 'optional arg num_proc NaN')
     src = create_src(directory)
-    run_operations(src, directory, processes)
+    run_operations(src, join(PATH, directory), processes)
     move_old(directory)
 
