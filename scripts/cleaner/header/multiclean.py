@@ -2,34 +2,32 @@ import os
 import subprocess
 import sys
 from multiprocessing import Process
-USAGE = 'python mutliclean.py source_dir target_dir [num_proc]'
+
+TAG = '[MediaCAT]'
+USAGE = 'python3 mutliclean.py source_dir target_dir [num_proc]'
 PYTHON = 'python3'
 SCRIPT = 'clean.py'
 
-
 def proc_err():
     '''Error for when [num_proc] is not a number.'''
-    print(f'error: got {sys.argv[3]}, expected a number', file=sys.stderr)
+    print(f'{TAG} error: got {sys.argv[3]}, expected number', file=sys.stderr)
     exit(1)
-
 
 def verify_cli():
     '''Verify the arguments of the CLI.'''
     source, target = get_dirs()
     if source == target:
-        print(f'error: same directory', file=sys.stderr)
+        print(f'{TAG} error: same directory', file=sys.stderr)
         exit(1)
     if not (os.path.exists(source) and os.path.exists(target)):
-        print(f'error: missing directories', file=sys.stderr)
+        print(f'{TAG} error: missing directories', file=sys.stderr)
         exit(1)
-
 
 def get_dirs():
     '''Return the source and target directories in their proper formats.'''
     source = sys.argv[1] if sys.argv[1].endswith('/') else sys.argv[1] + '/'
     target = sys.argv[2] if sys.argv[2].endswith('/') else sys.argv[2] + '/'
     return source, target
-
 
 def get_assignments(num_proc):
     '''Assign processes some work equally based on num_proc.'''
@@ -41,7 +39,6 @@ def get_assignments(num_proc):
         i += 1
     return assigner
 
-
 def clean(assignments):
     '''Clean excess headers based on assignments.'''
     source, target = get_dirs()
@@ -51,10 +48,9 @@ def clean(assignments):
         subprocess.run([PYTHON, SCRIPT, dirty, clean])
     exit(0)
 
-
 if __name__ == '__main__':
     if not (3 <= len(sys.argv) <= 4):
-        print(f'usage: {USAGE}', file=sys.stderr)
+        print(f'{TAG} usage: {USAGE}', file=sys.stderr)
         exit(1)
     if len(sys.argv) == 3:
         num_proc = 1
