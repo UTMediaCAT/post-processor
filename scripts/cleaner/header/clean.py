@@ -1,22 +1,19 @@
 import sys
 import os
 
-
 def eprint(*args):
     '''Print contents (*args) to standard error stream.'''
     print(*args, file=sys.stderr)
 
-
 def cli_error(nargs):
     '''Display error messages based on number of arguments (nargs).'''
-    eprint('[MediaCAT] expected usage: python clean.py <old file> <new file>')
+    eprint('[MediaCAT] expected usage: python3 clean.py <old file> <new file>')
     if nargs == 1:
         eprint('[MediaCAT] missing args: <old file> <new file>')
     elif nargs == 2:
         eprint('[MediaCAT] missing arg: <new file>')
     else:
         eprint('[MediaCAT] error: too many args')
-
 
 def verify(path):
     '''Exit gracefully if a CSV file does not exist at path.'''
@@ -27,13 +24,11 @@ def verify(path):
             eprint(f'[MediaCAT] {path} does not exist') 
         exit(1)
 
-
 def set_ext(target):
     '''Set the target's file extension to be .csv if it is not already.'''
     if os.path.splitext(target)[1] != '.csv':
         target += '.csv'
     return target
-
 
 def del_dups(data):
     '''Delete any duplicate headers in data.'''
@@ -41,7 +36,6 @@ def del_dups(data):
     while header in data:
         data.remove(header)
     data.insert(0, header)
-
 
 def clean(path, target):
     '''
@@ -54,7 +48,6 @@ def clean(path, target):
             del_dups(data)
     with open(target, 'w') as file:
         file.write(''.join(data))
-
 
 if __name__ == '__main__':
     if len(sys.argv) != 3:
