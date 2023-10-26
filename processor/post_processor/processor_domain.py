@@ -88,7 +88,7 @@ def find_domain_citation_aliases(article, scope):
 
         return str(citation_url_or_text_alias), str(citation_name),  str(anchor_text), str(found_aliases)
     except Exception:
-        return str(citation_url_or_text_alias), str(cit
+        return str(citation_url_or_text_alias), str(citation_name),  str(anchor_text), str(found_aliases)
 
 
 def get_domain_info(article, crawl_scope):
