@@ -2,9 +2,10 @@ import sys
 from os import getcwd
 from os import mkdir
 from os.path import abspath
-from os.path import realpath
+from os.path import dirname
 from os.path import exists
 from os.path import join
+from os.path import realpath
 from shutil import copytree
 from shutil import move
 from shutil import rmtree
@@ -15,7 +16,7 @@ TAG = '[MediaCAT]'
 USAGE = 'python3 clean.py dir [num_proc]'
 NUM_PROC = 4
 PATH = abspath(getcwd())
-SCRIPT_PATH = realpath(__file__)
+SCRIPT_PATH = dirname(realpath(__file__))
 INVALID = {'header', 'record', 'old', 'temp'}
 
 def perror(*args):
