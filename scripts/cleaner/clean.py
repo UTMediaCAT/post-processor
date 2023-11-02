@@ -99,6 +99,11 @@ def move_old(directory):
             moved = True
         i += 1
 
+def terminate():
+    '''Exit the process with a message and error code 0.'''
+    print(TAG, 'Automated cleaner completed successfully')
+    exit(0)
+
 if __name__ == '__main__':
     if not (2 <= len(sys.argv) <= 3):
         perror(TAG, 'expected usage:', USAGE)
@@ -110,4 +115,5 @@ if __name__ == '__main__':
     src = create_src(directory)
     run_operations(src, join(PATH, directory), processes)
     move_old(directory)
+    terminate()
 
