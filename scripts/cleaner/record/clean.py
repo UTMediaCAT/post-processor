@@ -2,6 +2,8 @@ import csv
 import os
 import sys
 
+ID='id'
+
 def eprint(*args):
     '''Print contents (*args) to standard error stream.'''
     print(*args, file=sys.stderr)
@@ -46,12 +48,11 @@ def clean(path, target):
     with open(path, 'r', newline='') as file:
         reader = csv.DictReader(c.replace('\0', '') for c in file)
         for row in reader:
-            if not row['id'] in unique:
-                unique[row['id']] = row
+            if not row[ID] in unique:
+                unique[row[ID]] = row
 
     with open(target, 'w', newline='') as file:
         writer = csv.DictWriter(file, fieldnames=header, 
-                                extrasaction='ignore', 
                                 quoting=csv.QUOTE_MINIMAL)
         writer.writeheader()
         ids = sorted(list(unique.keys()), reverse=True)
