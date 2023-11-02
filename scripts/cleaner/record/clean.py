@@ -51,6 +51,7 @@ def clean(path, target):
 
     with open(target, 'w', newline='') as file:
         writer = csv.DictWriter(file, fieldnames=header, 
+                                extrasaction='ignore', 
                                 quoting=csv.QUOTE_MINIMAL)
         writer.writeheader()
         ids = sorted(list(unique.keys()), reverse=True)
