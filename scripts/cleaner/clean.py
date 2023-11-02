@@ -2,6 +2,7 @@ import sys
 from os import getcwd
 from os import mkdir
 from os.path import abspath
+from os.path import realpath
 from os.path import exists
 from os.path import join
 from shutil import copytree
@@ -14,6 +15,7 @@ TAG = '[MediaCAT]'
 USAGE = 'python3 clean.py dir [num_proc]'
 NUM_PROC = 4
 PATH = abspath(getcwd())
+SCRIPT_PATH = realpath(__file__)
 INVALID = {'header', 'record', 'old', 'temp'}
 
 def perror(*args):
@@ -60,7 +62,7 @@ def run_header(src, directory, n_proc):
     '''Run the header multiclean.py script.'''
     try:
         cmd = ['python3', 'multiclean.py', src, directory, n_proc]
-        process = run(cmd, cwd=join(PATH, 'header'))
+        process = run(cmd, cwd=join(SCRIPT_PATH, 'header'))
         process.check_returncode()
     except CalledProcessError:
         exit(1)
@@ -72,7 +74,7 @@ def run_record(src, directory, n_proc):
     '''Run the record mutliclean.py script.'''
     try:
         cmd = ['python3', 'multiclean.py', src, directory, n_proc]
-        process = run(cmd, cwd=join(PATH, 'record'))
+        process = run(cmd, cwd=join(SCRIPT_PATH, 'record'))
         process.check_returncode()
     except CalledProcessError:
         exit(1)
