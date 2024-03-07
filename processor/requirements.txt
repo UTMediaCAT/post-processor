@@ -1,3 +1,4 @@
 dask[complete]
 pyarrow
 tldextract
+pytest
