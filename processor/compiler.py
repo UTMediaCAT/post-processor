@@ -57,8 +57,20 @@ def init():
     logging.basicConfig(filename='./logs/processor.log', level=logging.DEBUG, filemode='w') 
 
 
+def cleanup():
+    '''Clean up any remaining temporary files or directories.'''
+    CLEANUP = ('data_domain_csv')
+    for directory in CLEANUP:
+        if os.path.isdir(f'./{directory}'):
+            removables = os.listdir(f'./{directory}')
+            for removable in removables:
+                os.remove(f'./{directory}/{removable}')
+            os.rmdir(f'./{directory}')
+
+
 def terminate():
     '''Terminate the completed program.'''
+    cleanup()
     print('[MediaCAT] Post processing completed successfully')
     logging.info('successful completion')
     exit(0)
