@@ -43,7 +43,7 @@ def json_to_csv(json_dir: str, output_dir: str, filename: str):
                 json_data = json.load(file)
                 data.append(json_data)
     column_names = ['id', 'title', 'url', 'html_content', 'author', 'date', 'article_text', 'domain', 'updated', 'found_urls']
-    csv_filename = os.path.join(output_folder, "output.csv")  # Specify the path for the output CSV file
+    csv_filename = os.path.join(output_dir, "output.csv")  # Specify the path for the output CSV file
     with open(csv_filename, "w", newline="", encoding='utf-8') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=column_names)
         writer.writeheader()
