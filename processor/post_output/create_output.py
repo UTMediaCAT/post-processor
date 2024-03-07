@@ -35,20 +35,21 @@ def create_output():
         columns={'date': 'date of publication', 'article_text': 'plain text', 'url_dup': 'url'})
 
     if (len(domain_data) == 0):
+        logging.info('only including domain data')
         output = twitter_data
     elif (len(twitter_data) == 0):
+        logging.info('only including twitter data')
         output = domain_data
     else:
+        logging.info('including both types of data')
         output = domain_data.append(twitter_data)
 
-    output = output[(output['citation url or text alias'].str.len() > 2) & ((
-        output['associated publisher'].str.len() > 0) | (
-        output['name'].str.len() > 0) | (
-        output['tags'].str.len() > 0))]
     output = output.repartition(1)
+    output.to_csv('./output/preoutput_*.csv')
     output['date of publication'] = dd.to_datetime(output['date of publication'])
     output.to_parquet('./saved/final_output.parquet')
     output.to_csv('./output/output_*.csv')
+    logging.info('complete')
 
 
 if __name__ == '__main__':
