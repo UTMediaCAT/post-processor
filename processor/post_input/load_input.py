@@ -7,6 +7,7 @@ import glob
 import os
 import dask.dataframe as dd
 import pandas as pd
+from post_utils.utils import json_to_csv
 from post_utils.utils import write_to_file
 from traceback import format_exc
 from timeit import default_timer as timer
@@ -236,6 +237,19 @@ def create_empty_domain_dataframe():
     df = pd.DataFrame.from_dict(empty_domain_pd)
     return df
 
+def make_new_path(path, base):
+    return '/'.join(path.split('/')[:-1] + [base])
+
+def convert_domain(path):
+    '''Convert the JSON data files to CSV files.'''
+    start = timer()
+    logging.info(f'converting domain data located at {path} to CSV')
+    new_path = make_new_path(path, 'data_domain_csv')
+    os.mkdir(new_path)
+    json_to_csv(path, new_path, 'output.csv')
+    end = timer()
+    logging.info(f'time to convert domains {end - start}')
+
 
 def load_domain(path):
     '''
@@ -243,6 +257,8 @@ def load_domain(path):
     folder ./data_domain/ into a dictionary.
     Stores data to saved/domain_data.parquet.
     '''
+    convert_domain(path)
+    path = make_new_path(path, 'data_domain_csv')
 
     domain_timer = timer()
     logging.info(f'loading domain data located at {path}')
