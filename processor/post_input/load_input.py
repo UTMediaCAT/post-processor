@@ -5,6 +5,7 @@ import ast
 import sys
 import glob
 import os
+import os.path
 import dask.dataframe as dd
 import pandas as pd
 from post_utils.utils import json_to_csv
@@ -149,6 +150,9 @@ def load_twitter(path):
     # Try reading the csv file at path
     try:
         twitter_df = read_twitter(path)
+    except OSError:
+        logging.warning(f'did not find files at {path}, creating empty dataframe...')
+        twitter_df = create_empty_twitter_dataframe()
     except FileNotFoundError:
         logging.warning(f'did not find {path}, creating empty dataframe...')
         twitter_df = create_empty_twitter_dataframe()
@@ -201,8 +205,6 @@ def load_twitter(path):
         twitter_df['title'] = ''
         twitter_df['author'] = ''
         twitter_df['completed'] = False
-    else:
-        twitter_df = create_empty_twitter_dataframe()
 
     # set url as the index
     twitter_df = twitter_df.set_index('url')
@@ -245,7 +247,12 @@ def convert_domain(path):
     start = timer()
     logging.info(f'converting domain data located at {path} to CSV')
     new_path = make_new_path(path, 'data_domain_csv')
-    os.mkdir(new_path)
+    if os.path.isdir(new_path):
+        removables = os.listdir(new_path)
+        for removable in removables:
+            os.remove(f'{new_path}/{removable}')
+    else:
+        os.mkdir(new_path)
     json_to_csv(path, new_path, 'output.csv')
     end = timer()
     logging.info(f'time to convert domains {end - start}')

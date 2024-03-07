@@ -57,7 +57,7 @@ def init():
     logging.basicConfig(filename='./logs/processor.log', level=logging.DEBUG, filemode='w') 
 
 
-def cleanup()
+def cleanup():
     '''Clean up any remaining temporary files or directories.'''
     CLEANUP = ('data_domain_csv')
     for directory in CLEANUP:

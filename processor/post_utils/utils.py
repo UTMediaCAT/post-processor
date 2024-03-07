@@ -1,5 +1,6 @@
 import ast
 import json
+import os
 import sys
 PARSED_KEY = ['Mentions', 'found_urls']
 
