@@ -1024,7 +1024,7 @@ def create_static_nodes(scope):
 
     return data
 
-
+# Parses the arguments from command line. Retrieves number of processes to use and memory limit
 def parse_args():
     """
     Parse the script arguments, setting NUM_PROCS & MEM_LIMIT accordingly
@@ -1060,16 +1060,16 @@ if __name__ == '__main__':
     # and want to use saved data.
     read_from_memory = False
 
-    parse_args()
+    parse_args() #parse argument (gets NUM_PROCS and MEM_LIMIT)
     print('running with', NUM_PROCS, 'processes and', MEM_LIMIT, 'byte limit')
 
-    start = timer()
-    scope_timer = timer()
+    start = timer() # start timer
+    scope_timer = timer() # load file timer?
     # load scopes
     crawl_scope = load_scope('./crawl_scope.csv')
     citation_scope = load_scope('./citation_scope.csv')
 
-    scope_timer_end = timer()
+    scope_timer_end = timer() # end load file timer?
 
     twitter_timer = timer()
     print('loading twitter data')
