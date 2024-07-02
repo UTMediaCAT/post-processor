@@ -9,6 +9,7 @@ import pandas as pd
 from dask.distributed import WorkerPlugin
 
 PARSED_KEY = ['Mentions', 'Found URLs']
+WEB_ARCHIVE_PREFIX = re.compile(r'https?://web\.archive\.org/web/\d+/(https?://.*)')
 
 class LogPlugin(WorkerPlugin):
     def __init__(self, logger, path):
@@ -109,19 +110,13 @@ def json_to_csv(json_dir: str, output_dir: str):
                             output_row['Date'] = json_data['date']
                             output_row['Domain'] = json_data['domain']
                             output_row['Found URLs'] = []
-                            for url in json_data['found_urls']:
-                                done = False
-                                if not url.get('url'):
-                                    continue
-                                for anchor in soup.find_all('a', href=True):
-                                    href = anchor['href']
-                                    if url['url'] in href:
-                                        url['anchor_text'] = anchor.get_text().strip()
-                                        done = True
-                                        break
-                                if not done:    
-                                    url['anchor_text'] = ''
-                                output_row['Found URLs'].append(url)
+                            for anchor in soup.find_all('a', href=True):
+                                href = anchor['href']
+                                match = WEB_ARCHIVE_PREFIX.match(href)
+                                if match:
+                                    output_row['Found URLs'].append({'url': match.group(1), 'anchor_text': anchor.get_text().strip().replace('\n', ' ')})
+                                else:
+                                    output_row['Found URLs'].append({'url': href, 'anchor_text': anchor.get_text().strip().replace('\n', ' ')})
                             writer.writerow(output_row)
                             i += 1
                         except Exception as e:

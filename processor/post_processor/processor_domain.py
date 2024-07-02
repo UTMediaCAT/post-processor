@@ -103,7 +103,7 @@ def find_domain_citation_aliases(article, scope, twitters):
 
     # Check the article to see if there are any aliases
     for domain, info in scope.items():
-        if domain == article_domain:
+        if domain in (article_domain, article_domain[4:]):
             continue
         for alias in info['Aliases']:
             if not alias:

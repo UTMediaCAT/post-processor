@@ -4,3 +4,5 @@ domain_input_csv
 twitter_input_csv
 __pycache__
 saved
+data_domain
+data_twitter

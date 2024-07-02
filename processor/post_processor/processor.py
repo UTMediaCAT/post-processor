@@ -28,20 +28,22 @@ def parse_referrals(df, domain_referrals, twitter_referrals):
       twitter_referrals: a data frame of all the referrals in the twitter data
     '''
     for i, row in df.iterrows():
-        referring_articles = []
+        referring_articles_set = set()
         try:
             data = domain_referrals.loc[i]['Domains']
             if data:
-              referring_articles += ast.literal_eval(data)
+              referring_articles_set.update(ast.literal_eval(data))
         except Exception:
             pass
 
         try:
             data = twitter_referrals.loc[i]['Domains']
             if data:
-              referring_articles += ast.literal_eval(data)
+              referring_articles_set.update(ast.literal_eval(data))
         except Exception:
             pass
+        referring_articles_set.discard(i)
+        referring_articles = list(referring_articles_set)
         df.loc[i, 'Cited by URLs'] = str(referring_articles)[1:-1]
         df.loc[i, 'Number of Cited by URLs'] = len(referring_articles)
     return df
