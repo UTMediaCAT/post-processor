@@ -85,27 +85,48 @@ def json_to_csv(json_dir: str, output_dir: str):
                     file_path = os.path.join(root, filename)
                     with open(file_path, "r", encoding='utf-8') as file:
                         output_row = {}
-                        json_data = json.load(file)
-                        if image_suffixes.search(json_data['url']):
+                        try:
+                            json_data = json.load(file)
+                        except Exception as e:
+                            eprint(f"Error reading {filename}: {e}")
                             continue
-                        if 'bodyHTML' not in json_data:
-                            continue
-                        output_row['ID'] = i
-                        output_row['Title'] = json_data['title']
-                        output_row['Referring URL'] = json_data['url']
-                        if json_data['article_text']:
-                            output_row['Article Text'] = json_data['article_text'].replace('\n', ' ').strip()
-                        else:
+                        try:
+                            if image_suffixes.search(json_data['url']):
+                                continue
+                            if 'bodyHTML' not in json_data:
+                                continue
+                            output_row['ID'] = i
+                            output_row['Title'] = json_data['title']
+                            output_row['Referring URL'] = json_data['url']
                             soup = BeautifulSoup(json_data['bodyHTML'], features="html.parser")
-                            for content in soup(['script', 'style']):
-                                content.decompose()
-                            output_row['Article Text'] = soup.get_text().replace('\n', ' ').strip()
-                        output_row['Author'] = json_data['author']
-                        output_row['Date'] = json_data['date']
-                        output_row['Domain'] = json_data['domain']
-                        output_row['Found URLs'] = json_data['found_urls']
-                        writer.writerow(output_row)
-                        i += 1
+                            if json_data['article_text']:
+                                output_row['Article Text'] = json_data['article_text'].replace('\n', ' ').strip()
+                            else:
+                                for content in soup(['script', 'style']):
+                                    content.decompose()
+                                output_row['Article Text'] = soup.get_text().replace('\n', ' ').strip()
+                            output_row['Author'] = json_data['author']
+                            output_row['Date'] = json_data['date']
+                            output_row['Domain'] = json_data['domain']
+                            output_row['Found URLs'] = []
+                            for url in json_data['found_urls']:
+                                done = False
+                                if not url.get('url'):
+                                    continue
+                                for anchor in soup.find_all('a', href=True):
+                                    href = anchor['href']
+                                    if url['url'] in href:
+                                        url['anchor_text'] = anchor.get_text().strip()
+                                        done = True
+                                        break
+                                if not done:    
+                                    url['anchor_text'] = ''
+                                output_row['Found URLs'].append(url)
+                            writer.writerow(output_row)
+                            i += 1
+                        except Exception as e:
+                            eprint(f"Error reading {filename}: {e}")
+                            continue
 
 def compile_and_validate_csv(csv_dir: str, output_dir: str):
     '''

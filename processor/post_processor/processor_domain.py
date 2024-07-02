@@ -46,6 +46,8 @@ def find_domain_citation_aliases(article, scope, twitters):
         article_twitters = entry['Twitter Handles']
     # Go through the found_urls of the article
     for url in article['Found URLs']:
+        if not url.get('url'):
+            continue
         # If the URL is an image then skip
         if image_pattern.search(url['url']):
             continue
@@ -68,6 +70,9 @@ def find_domain_citation_aliases(article, scope, twitters):
                 cited_tags.append(twitter['Tags'])
                 cited_publisher.append(twitter['Publisher'])
             continue
+        # Recursive citations skip
+        if domain == article_domain or (domain.startswith('www.') and domain[4:] == article_domain):
+            continue
         # If its a domain check the citation dictionary
         entry = scope.get(domain)
         if not entry and domain.startswith('www.'):
@@ -77,7 +82,7 @@ def find_domain_citation_aliases(article, scope, twitters):
             cited_name.append(entry['Name'])
             cited_tags.append(entry['Tags'])
             cited_publisher.append(entry['Publisher'])
-            anchor_text.append(url['title'].strip())
+            anchor_text.append(url['anchor_text'])
 
     # Skip if the article has no text
     if not article['Article Text'] or type(article['Article Text']) is not str:
