@@ -6,6 +6,7 @@ import os
 from urllib.parse import urlparse
 import dask.dataframe as dd
 import pandas as pd
+import numpy as np
 from dask.distributed import Client
 from post_utils.utils import row_parser
 from timeit import default_timer as timer
@@ -184,23 +185,52 @@ def process_partition(df, citation_scope, twitter_scope):
                    'Referring Associated Publisher',
                    'Referring Tags'
                   ]] = res_arr
+    df['Cited URLs or Text Aliases'] = df['Cited URLs or Text Aliases'].replace('', np.nan)
     return df
 
-def process_referral(df):
+def process_referral(df, citation_scope):
     '''
     Process referral using the 'Found URLs' column.
     Constructs the referrals via a dictionary of lists with the key being
     all the links and aliases referred to by the particular row. Then each
     of the links and aliases from the row will include this current row's URL
-    address in its referrals list. 
+    address in its referrals list. We use citation_scope to prevent recursive referral.
     Returns a simple dataframe with the source and domains. `Domains` refer to the
     list of sites that referenced a particular `Source`.
     Parameters:
       df: a partition from the domain data frame
+      citation_scope: the citation scope dictionary
     '''
     referrals = {}
     for i, row in df.iterrows():
+        main_url = i if "://" in i else "http://" + i
+        parsed_origin = urlparse(main_url)
+        entry = citation_scope.get(parsed_origin.netloc)
+        article_twitters = []
+        if not entry and parsed_origin.netloc.startswith('www.'):
+            entry = citation_scope.get(parsed_origin.netloc[4:])
+        if entry:
+            article_twitters = entry['Twitter Handles']
+        
         for link in ast.literal_eval(row['Found URLs']):
+            if not link.get('url'):
+                continue
+            # Ignore Image Matches
+            if image_pattern.search(link['url']):
+                continue
+            temp_url = link['url'] if "://" in link['url'] else "http://" + link['url']
+            parsed_url = urlparse(temp_url)
+            # Check Twitter Links if match then skip recursive match
+            if parsed_url.netloc in ('twitter.com', 'www.twitter.com'):
+                path_split = parsed_url.path.split('/')
+                if len(path_split) < 2:
+                    continue
+                twitter_handle = path_split[1]
+                if twitter_handle in article_twitters:
+                    continue
+            # Check if they are the same domain if so skip recursive match
+            elif parsed_origin.netloc == parsed_url.netloc or (parsed_url.netloc.startswith('www.') and parsed_origin.netloc == parsed_url.netloc[4:]):
+                continue
             if link['url'] not in referrals:
                 referrals[link['url']] = []
             referrals[link['url']].append(i)
@@ -279,6 +309,7 @@ def process_domain(citation_scope, twitter_scope, args):
 
             # Begin processing the partition
             data = data_partitions.map_partitions(process_partition, citation_scope, twitter_scope, meta=meta)
+            data = data.dropna(subset=['Cited URLs or Text Aliases'])
             data.to_parquet('./saved/processed_domain_data.parquet', engine='pyarrow')
             logging.info('Finished Domain processing')
             client.unregister_worker_plugin(name="logger")
@@ -292,7 +323,7 @@ def process_domain(citation_scope, twitter_scope, args):
         # Read the saved processed_domain_data to avoid having second calculations here
         # Domain referral processing begins here
         data = dd.read_parquet('./saved/processed_domain_data.parquet')
-        referrals = data.map_partitions(process_referral, meta={'Source': 'object', 'Domains': 'object'}).set_index('Source', drop=True)
+        referrals = data.map_partitions(process_referral, citation_scope, meta={'Source': 'object', 'Domains': 'object'}).set_index('Source', drop=True)
         referral_concat = dd.Aggregation(
             name = 'referral_concat', 
             chunk = lambda x: x.aggregate(list), 
@@ -302,7 +333,7 @@ def process_domain(citation_scope, twitter_scope, args):
         referrals.to_parquet('./saved/domain_referral_data.parquet', engine='pyarrow')
         client.close()
         end = timer()
-        logging.info(f'finished processing domain')
+        logging.info('finished processing domain')
         logging.info('processing domain took ' + str(end - start) + ' seconds')
     except Exception:
         logging.warning('exception at processing domain, data written to saved/')  # nopep8

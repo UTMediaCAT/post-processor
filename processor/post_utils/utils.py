@@ -4,9 +4,10 @@ import json
 import os
 import sys
 import re
-from bs4 import BeautifulSoup
+from newspaper import Article
 import pandas as pd
 from dask.distributed import WorkerPlugin
+from bs4 import BeautifulSoup
 
 PARSED_KEY = ['Mentions', 'Found URLs']
 WEB_ARCHIVE_PREFIX = re.compile(r'https?://web\.archive\.org/web/\d+/(https?://.*)')
@@ -99,17 +100,25 @@ def json_to_csv(json_dir: str, output_dir: str):
                             output_row['ID'] = i
                             output_row['Title'] = json_data['title']
                             output_row['Referring URL'] = json_data['url']
-                            soup = BeautifulSoup(json_data['bodyHTML'], features="html.parser")
+                            article = Article('', keep_article_html=True, fetch_images=False)
+                            article.set_html(json_data['bodyHTML'])
+                            article.parse()
                             if json_data['article_text']:
                                 output_row['Article Text'] = json_data['article_text'].replace('\n', ' ').strip()
                             else:
-                                for content in soup(['script', 'style']):
-                                    content.decompose()
-                                output_row['Article Text'] = soup.get_text().replace('\n', ' ').strip()
-                            output_row['Author'] = json_data['author']
-                            output_row['Date'] = json_data['date']
+                                output_row['Article Text'] = article.text.replace('\n', ' ').strip()
+                            if json_data['author']:
+                                output_row['Author'] = json_data['author']
+                            else:
+                                output_row['Author'] = str(article.authors)[1:-1]
+                            if json_data['date']:
+                                output_row['Date'] = json_data['date']
+                            else:
+                                output_row['Date'] = article.publish_date
                             output_row['Domain'] = json_data['domain']
                             output_row['Found URLs'] = []
+
+                            soup = BeautifulSoup(article.article_html, features='html.parser')
                             for anchor in soup.find_all('a', href=True):
                                 href = anchor['href']
                                 match = WEB_ARCHIVE_PREFIX.match(href)

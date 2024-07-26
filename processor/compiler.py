@@ -72,6 +72,18 @@ def check_files():
         eprint('[MediaCAT] Files not found; please add files')
         exit(1)
 
+def clear_directory_contents(directory):
+    '''
+    Clear up a directory content
+    '''
+    for root, dirs, files in os.walk(directory, topdown=False):
+        for name in files:
+            file_path = os.path.join(root, name)
+            os.unlink(file_path)
+        for name in dirs:
+            dir_path = os.path.join(root, name)
+            shutil.rmtree(dir_path)
+
 def init():
     '''
     Initialize the compiler script.
@@ -79,35 +91,61 @@ def init():
     Also cleans the log folder
     '''
     logging.basicConfig(filename='./logs/processor.log', level=logging.DEBUG, filemode='w') 
-    # Get a list of all log files and directory
-    log_files = glob.glob('./logs/*')
+    log_files = './logs'
 
-    # Iterate over the list of files and remove each log
-    for file in log_files:
-        try:
-            if os.path.isdir(file):
-                shutil.rmtree(file)
-                logging.info(f'Removed {file}')
-        except Exception as e:
-            logging.info(f"Error deleting {file}: {e}")
+    if os.path.islink(log_files):
+        # Resolve the symbolic link to get the target directory
+        target_path = os.readlink(log_files)
+
+        # Ensure the target path is an absolute path
+        if not os.path.isabs(target_path):
+            target_path = os.path.join(os.path.dirname(log_files), target_path)
+        
+        # Clear the contents of the target directory
+        clear_directory_contents(target_path)
+        logging.info(f'Cleared contents of log files {target_path}')
+    else:
+        log_files = glob.glob(os.path.join(log_files, '*'))
+        # Iterate over the list of files and remove each log
+        for file in log_files:
+            try:
+                if os.path.isdir(file):
+                    shutil.rmtree(file)
+                    logging.info(f'Removed {file}')
+            except Exception as e:
+                logging.info(f"Error deleting {file}: {e}")
 
 def cleanup_parquet():
     '''
     Cleans up every .parquet saves in the ./saved folder
     '''
-    # Get a list of saved parquets
-    parquet_files = glob.glob('./saved/*')
+    saved_dir = './saved'
+    
+    if os.path.islink(saved_dir):
+        # Resolve the symbolic link to get the target directory
+        target_path = os.readlink(saved_dir)
+        
+        # Ensure the target path is an absolute path
+        if not os.path.isabs(target_path):
+            target_path = os.path.join(os.path.dirname(saved_dir), target_path)
+        
+        # Clear the contents of the target directory
+        clear_directory_contents(target_path)
+        logging.info(f'Cleared contents of saved files {target_path}')
+    else:
+        # Get a list of saved parquets
+        parquet_files = glob.glob(os.path.join(saved_dir, '*'))
 
-    # Iterate over the list of files and remove each parquet
-    for file in parquet_files:
-        try:
-            if os.path.isdir(file):
-                shutil.rmtree(file)
-            else:
-                os.remove(file)
-            logging.info(f'Removed {file}')
-        except Exception as e:
-            logging.info(f"Error deleting {file}: {e}")
+        # Iterate over the list of files and remove each parquet
+        for file in parquet_files:
+            try:
+                if os.path.isdir(file):
+                    shutil.rmtree(file)
+                else:
+                    os.remove(file)
+                logging.info(f'Removed {file}')
+            except Exception as e:
+                logging.info(f"Error deleting {file}: {e}")
 
 def cleanup():
     '''
@@ -116,9 +154,25 @@ def cleanup():
     CLEANUP = ('domain_input_csv', 'twitter_input_csv')
     for directory in CLEANUP:
         dir_path = f'./{directory}'
-        if os.path.isdir(f'./{directory}'):
-            shutil.rmtree(dir_path)
-            logging.info(f'Removed {dir_path}')
+        try:
+            if os.path.isdir(dir_path):
+                if os.path.islink(dir_path):
+                    # Resolve the symbolic link to get the target directory
+                    target_path = os.readlink(dir_path)
+                    
+                    # Ensure the target path is an absolute path
+                    if not os.path.isabs(target_path):
+                        target_path = os.path.join(os.path.dirname(dir_path), target_path)
+                    
+                    # Clear the contents of the target directory
+                    clear_directory_contents(target_path)
+                    logging.info(f'Cleared contents of symbolic link target {target_path}')
+                else:
+                    # If it's not a symbolic link, remove the directory as usual
+                    shutil.rmtree(dir_path)
+                    logging.info(f'Removed {dir_path}')
+        except Exception as e:
+            logging.info(f"Error deleting {dir_path}: {e}")
 
 def terminate():
     '''

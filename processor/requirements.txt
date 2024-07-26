@@ -2,3 +2,4 @@ dask[complete]
 pyarrow
 tldextract
 beautifulsoup4
+newspaper3k

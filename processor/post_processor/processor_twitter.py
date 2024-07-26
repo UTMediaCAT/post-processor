@@ -10,6 +10,7 @@ from dask.distributed import Client
 from post_utils.utils import row_parser
 from timeit import default_timer as timer
 from post_utils.utils import LogPlugin
+import numpy as np
 
 image_pattern = re.compile(r'\.(jpg|jpeg|png|gif|bmp|svg|webp)(\?.*)?$', re.IGNORECASE)
 
@@ -160,23 +161,45 @@ def process_partition(df, citation_scope, twitter_scope):
                    'Referring Associated Publisher',
                    'Referring Tags'
                   ]] = res_arr
+    df['Cited URLs or Text Aliases'] = df['Cited URLs or Text Aliases'].replace('', np.nan)
     return df
 
-def process_referral(df):
+def process_referral(df, citation_scope):
     '''
     Process referral using the 'Found URLs' column.
     Constructs the referrals via a dictionary of lists with the key being
     all the links and aliases referred to by the particular row. Then each
     of the links and aliases from the row will include this current row's URL
-    address in its referrals list. 
+    address in its referrals list. We use citation_scope to prevent recursive referral.
     Returns a simple dataframe with the source and domains. `Domains` refer to the
     list of sites that referenced a particular `Source`.
     Parameters:
       df: a partition from the twitter data frame
+      citation_scope: the citation scope dictionary
     '''
     referrals = {}
     for i, row in df.iterrows():
         for link in ast.literal_eval(row['Found URLs']):
+            # Ignore Image Matches
+            if image_pattern.search(link):
+                continue
+            temp_url = link if "://" in link else "http://" + link
+            parsed_url = urlparse(temp_url)
+            # Check Twitter Link if match then skip recursive match
+            if parsed_url.netloc in ('twitter.com', 'www.twitter.com'):
+                path_split = parsed_url.path.split('/')
+                if len(path_split) < 2:
+                    continue
+                tweet_handle = path_split[1]
+                if tweet_handle == row['Domain']:
+                    continue
+            else:
+                # Check if the URL we are adding contains the same twitter handles if so skip
+                entry = citation_scope.get(parsed_url.netloc)
+                if not entry and parsed_url.netloc.startswith('www.'):
+                    entry = citation_scope.get(parsed_url.netloc[4:])
+                if entry and row['Domain'] in entry['Twitter Handles']:
+                    continue
             if link not in referrals:
                 referrals[link] = []
             referrals[link].append(i)
@@ -253,6 +276,7 @@ def process_twitter(citation_scope, twitter_scope, args):
 
             # Begin processing the partition
             data = data_partitions.map_partitions(process_partition, citation_scope, twitter_scope, meta=meta)
+            data = data.dropna(subset=['Cited URLs or Text Aliases'])
             data.to_parquet('./saved/processed_twitter_data.parquet', engine='pyarrow')
             logging.info('Finished Twitter processing')
             client.unregister_worker_plugin(name="logger")
@@ -266,7 +290,7 @@ def process_twitter(citation_scope, twitter_scope, args):
         # Read the saved processed_twitter_data to avoid having second calculations here
         # Twitter referral processing begins here
         data = dd.read_parquet('./saved/processed_twitter_data.parquet')
-        referrals = data.map_partitions(process_referral, meta={'Source': 'object', 'Domains': 'object'}).set_index('Source', drop=True)
+        referrals = data.map_partitions(process_referral, citation_scope, meta={'Source': 'object', 'Domains': 'object'}).set_index('Source', drop=True)
         referral_concat = dd.Aggregation(
             name = 'referral_concat', 
             chunk = lambda x: x.aggregate(list), 
@@ -276,7 +300,7 @@ def process_twitter(citation_scope, twitter_scope, args):
         referrals.to_parquet('./saved/twitter_referral_data.parquet', engine='pyarrow')
         client.close()
         end = timer() 
-        logging.info(f'finished processing twitter')
+        logging.info('finished processing twitter')
         logging.info('processing twitter took ' + str(end - start) + ' seconds')
     except Exception:
         logging.warning('exception at processing twitter, data written to saved/')
