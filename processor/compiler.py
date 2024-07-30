@@ -90,9 +90,7 @@ def init():
     Nothing very important goes on here. It just setup logging to ./logs/processor.log file.
     Also cleans the log folder
     '''
-    logging.basicConfig(filename='./logs/processor.log', level=logging.DEBUG, filemode='w') 
     log_files = './logs'
-
     if os.path.islink(log_files):
         # Resolve the symbolic link to get the target directory
         target_path = os.readlink(log_files)
@@ -103,7 +101,7 @@ def init():
         
         # Clear the contents of the target directory
         clear_directory_contents(target_path)
-        logging.info(f'Cleared contents of log files {target_path}')
+        print(f'Cleared contents of log files {target_path}')
     else:
         log_files = glob.glob(os.path.join(log_files, '*'))
         # Iterate over the list of files and remove each log
@@ -111,9 +109,10 @@ def init():
             try:
                 if os.path.isdir(file):
                     shutil.rmtree(file)
-                    logging.info(f'Removed {file}')
+                    print(f'Removed {file}')
             except Exception as e:
-                logging.info(f"Error deleting {file}: {e}")
+                print(f"Error deleting {file}: {e}")
+    logging.basicConfig(filename='./logs/processor.log', level=logging.DEBUG, filemode='w')
 
 def cleanup_parquet():
     '''
