@@ -11,6 +11,7 @@ from post_utils.utils import row_parser
 from timeit import default_timer as timer
 from post_utils.utils import LogPlugin
 import numpy as np
+import pyarrow as pa
 
 image_pattern = re.compile(r'\.(jpg|jpeg|png|gif|bmp|svg|webp)(\?.*)?$', re.IGNORECASE)
 
@@ -277,7 +278,26 @@ def process_twitter(citation_scope, twitter_scope, args):
             # Begin processing the partition
             data = data_partitions.map_partitions(process_partition, citation_scope, twitter_scope, meta=meta)
             data = data.dropna(subset=['Cited URLs or Text Aliases'])
-            data.to_parquet('./saved/processed_twitter_data.parquet', engine='pyarrow')
+            data.to_parquet('./saved/processed_twitter_data.parquet', engine='pyarrow', schema={
+              'Referring URL': pa.large_string(),
+              'ID': pa.large_string(),
+              'Article Text': pa.large_string(),
+              'Date': pa.large_string(),
+              'Domain': pa.large_string(),
+              'Found URLs': pa.large_string(),
+              'Retweet Count': pa.int64(),
+              'Like Count': pa.int64(),
+              'Reply Count': pa.int64(),
+              'Quote Count': pa.int64(),
+              'Mentions': pa.large_string(),
+              'Cited URLs or Text Aliases': pa.large_string(),
+              'Cited Names': pa.large_string(),
+              'Cited Associated Publishers': pa.large_string(),
+              'Cited Tags': pa.large_string(),
+              'Referring Name': pa.large_string(),
+              'Referring Associated Publisher': pa.large_string(),
+              'Referring Tags': pa.large_string()
+            })
             logging.info('Finished Twitter processing')
             client.unregister_worker_plugin(name="logger")
             # Restarting the worker here to reset resources (in-case worker is still holding on)
@@ -297,7 +317,10 @@ def process_twitter(citation_scope, twitter_scope, args):
             agg = lambda x: x.aggregate(merge_domains)
         )
         referrals = referrals.groupby('Source').agg(referral_concat)
-        referrals.to_parquet('./saved/twitter_referral_data.parquet', engine='pyarrow')
+        referrals.to_parquet('./saved/twitter_referral_data.parquet', engine='pyarrow', schema={
+          'Source': pa.large_string(),
+          'Domains': pa.large_string()
+        })
         client.close()
         end = timer() 
         logging.info('finished processing twitter')

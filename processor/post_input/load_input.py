@@ -16,6 +16,7 @@ from post_utils.utils import write_to_file
 from post_utils.utils import LogPlugin
 from traceback import format_exc
 from timeit import default_timer as timer
+import pyarrow as pa
 
 
 def init():
@@ -195,7 +196,8 @@ def load_twitter(path, args):
         # Loads the CSV into Dask. Usecols specify which CSV columns to use. Blocksize indicates in memory partition size
         twitter_df = dd.read_csv(path + '/output.csv',
                                   dtype={'ID': object},
-                                  blocksize='50MB')
+                                  blocksize='50MB',
+                                  na_filter=False)
     except OSError:
         logging.warning(f'did not find files at {path}, creating empty dataframe...')
         twitter_df = create_empty_twitter_dataframe()
@@ -215,7 +217,19 @@ def load_twitter(path, args):
         # Set index to be the URL for easier query later
         twitter_df = twitter_df.set_index('Referring URL')
 
-    twitter_df.to_parquet('./saved/twitter_data.parquet', engine='pyarrow')
+    twitter_df.to_parquet('./saved/twitter_data.parquet', engine='pyarrow', schema={
+      'Referring URL': pa.large_string(),
+      'ID': pa.large_string(),
+      'Article Text': pa.large_string(),
+      'Date': pa.large_string(),
+      'Domain': pa.large_string(),
+      'Found URLs': pa.large_string(),
+      'Retweet Count': pa.int64(),
+      'Like Count': pa.int64(),
+      'Reply Count': pa.int64(),
+      'Quote Count': pa.int64(),
+      'Mentions': pa.large_string(),
+    })
     # Close the worker instances
     client.close()
     twitter_timer_end = timer()
@@ -294,7 +308,8 @@ def load_domain(path, args):
                                                              'Found URLs': object,
                                                              'Article Text': object
                                                              },
-                                                             blocksize='50MB')
+                                                             blocksize='50MB',
+                                                             na_filter=False)
     except OSError:
         logging.warning(f'did not find files at {path}, creating empty dataframe...')
         domain_df = create_empty_domain_dataframe()
@@ -314,7 +329,16 @@ def load_domain(path, args):
         # Set index to be the URL for easier query later
         domain_df = domain_df.set_index('Referring URL')
 
-    domain_df.to_parquet('./saved/domain_data.parquet', engine='pyarrow')
+    domain_df.to_parquet('./saved/domain_data.parquet', engine='pyarrow', schema={
+      'ID': pa.int64(),
+      'Title': pa.large_string(),
+      'Referring URL': pa.large_string(),
+      'Author': pa.large_string(),
+      'Date': pa.large_string(),
+      'Domain': pa.large_string(),
+      'Found URLs': pa.large_string(),
+      'Article Text': pa.large_string(),
+    })
     # Close the worker instances
     client.close()
     domain_timer_end = timer()

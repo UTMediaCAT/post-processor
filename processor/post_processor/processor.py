@@ -8,6 +8,7 @@ from post_processor.processor_domain import process_domain
 from post_processor.processor_twitter import process_twitter
 from timeit import default_timer as timer
 from post_utils.utils import LogPlugin
+import pyarrow as pa
 
 def init():
     '''
@@ -108,7 +109,26 @@ def process_crawler(citation_scope, twitter_scope, args):
     if scaled_domain:
         # Rescale domain to have 50MB partitions
         domain_data = domain_data.repartition(partition_size='50MB')
-    domain_data.to_parquet('./saved/final_processed_domain_data.parquet', engine='pyarrow')
+    domain_data.to_parquet('./saved/final_processed_domain_data.parquet', engine='pyarrow', schema={
+      'ID': pa.int64(),
+      'Title': pa.large_string(),
+      'Referring URL': pa.large_string(),
+      'Author': pa.large_string(),
+      'Date': pa.large_string(),
+      'Domain': pa.large_string(),
+      'Found URLs': pa.large_string(),
+      'Article Text': pa.large_string(),
+      'Cited URLs or Text Aliases': pa.large_string(),
+      'Cited Names': pa.large_string(),
+      'Cited Associated Publishers': pa.large_string(),
+      'Cited Tags': pa.large_string(),
+      'Anchor Text': pa.large_string(),
+      'Referring Name': pa.large_string(),
+      'Referring Associated Publisher': pa.large_string(),
+      'Referring Tags': pa.large_string(),
+      'Cited by URLs': pa.large_string(),
+      'Number of Cited by URLs': pa.int64()
+    })
 
     logging.info('processing referrals - for twitter matching')
     logging.info(f'twitter columns: {twitter_data.columns}')
@@ -123,5 +143,26 @@ def process_crawler(citation_scope, twitter_scope, args):
     if not scaled_domain:
         # Rescale twitter to have 50MB partitions
         twitter_data = twitter_data.repartition(partition_size='50MB')
-    twitter_data.to_parquet('./saved/final_processed_twitter_data.parquet', engine='pyarrow')
+    twitter_data.to_parquet('./saved/final_processed_twitter_data.parquet', engine='pyarrow', schema={
+      'Referring URL': pa.large_string(),
+      'ID': pa.large_string(),
+      'Article Text': pa.large_string(),
+      'Date': pa.large_string(),
+      'Domain': pa.large_string(),
+      'Found URLs': pa.large_string(),
+      'Retweet Count': pa.int64(),
+      'Like Count': pa.int64(),
+      'Reply Count': pa.int64(),
+      'Quote Count': pa.int64(),
+      'Mentions': pa.large_string(),
+      'Cited URLs or Text Aliases': pa.large_string(),
+      'Cited Names': pa.large_string(),
+      'Cited Associated Publishers': pa.large_string(),
+      'Cited Tags': pa.large_string(),
+      'Referring Name': pa.large_string(),
+      'Referring Associated Publisher': pa.large_string(),
+      'Referring Tags': pa.large_string(),
+      'Cited by URLs': pa.large_string(),
+      'Number of Cited by URLs': pa.int64()
+    })
     client.close()
