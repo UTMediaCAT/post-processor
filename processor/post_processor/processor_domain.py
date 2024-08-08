@@ -54,7 +54,10 @@ def find_domain_citation_aliases(article, scope, twitters):
         if image_pattern.search(url['url']):
             continue
         temp_url = url['url'] if "://" in url['url'] else "http://" + url['url']
-        parsed = urlparse(temp_url)
+        try:
+            parsed = urlparse(temp_url)
+        except Exception:
+            continue
         domain = parsed.netloc
         # If the found domain is from twitter then check its twitter handle
         if domain in ('twitter.com', 'www.twitter.com'):
@@ -186,6 +189,12 @@ def process_partition(df, citation_scope, twitter_scope):
                    'Referring Associated Publisher',
                    'Referring Tags'
                   ]] = res_arr
+    columns_to_convert = [
+    'Cited URLs or Text Aliases', 'Cited Names', 'Cited Associated Publishers',
+    'Cited Tags', 'Anchor Text', 'Referring Name', 'Referring Associated Publisher', 'Referring Tags'
+    ]
+    for column in columns_to_convert:
+        df[column] = df[column].astype(str).fillna('')
     df['Cited URLs or Text Aliases'] = df['Cited URLs or Text Aliases'].replace('', np.nan)
     return df
 
@@ -220,7 +229,10 @@ def process_referral(df, citation_scope):
             if image_pattern.search(link['url']):
                 continue
             temp_url = link['url'] if "://" in link['url'] else "http://" + link['url']
-            parsed_url = urlparse(temp_url)
+            try:
+                parsed_url = urlparse(temp_url)
+            except Exception:
+                continue
             # Check Twitter Links if match then skip recursive match
             if parsed_url.netloc in ('twitter.com', 'www.twitter.com'):
                 path_split = parsed_url.path.split('/')
